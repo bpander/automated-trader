@@ -5,6 +5,8 @@ define([
 
     var Chart = function () {
 
+        this.instrument = '';
+
         this.candles = [];
 
     };

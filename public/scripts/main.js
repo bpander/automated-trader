@@ -13,20 +13,42 @@ require([
 
     $(function () {
 
-        var stubData = {"instrument":"EUR_USD","granularity":"D","candles":[{"time":1371934800,"openMid":1.31211,"highMid":1.31425,"lowMid":1.30867,"closeMid":1.30920,"complete":"true"},{"time":1372021200,"openMid":1.30920,"highMid":1.31441,"lowMid":1.30592,"closeMid":1.31197,"complete":"true"},{"time":1372107600,"openMid":1.31197,"highMid":1.31508,"lowMid":1.30651,"closeMid":1.30784,"complete":"true"},{"time":1372194000,"openMid":1.30785,"highMid":1.31649,"lowMid":1.29849,"closeMid":1.30117,"complete":"true"},{"time":1372280400,"openMid":1.30117,"highMid":1.30170,"lowMid":1.30051,"closeMid":1.30160,"complete":"false"}]};
-        console.log('stubData', stubData);
+        // return;
 
-        var chart = new Chart();
-        var chartView = new ChartView(chart);
+        var _onDataGet = function (data) {
+            var chart = new Chart();
+            chart.instrument = data.instrument;
+            var chartView = new ChartView(chart);
+            $.each(data.candles, function (i, candleData) {
+                var candle = new Candle().fromJSON(candleData);
+                chart.addCandle(candle);
+            });
+            var container = document.createElement('div');
+            container.style.width = '600px';
+            container.style.height = '400px';
+            container.style.margin = '10px auto';
+            document.body.appendChild(container);
+            container.appendChild(chartView.render().element);
+        };
 
-        $.each(stubData.candles, function (i, candleData) {
-            var candle = new Candle().fromJSON(candleData);
-            chart.addCandle(candle);
+        var pairs = [
+            'EUR_USD',
+            'USD_JPY',
+            'GBP_USD',
+            'AUD_USD',
+            'USD_CHF',
+            'USD_CAD',
+            'USD_HKD',
+            'USD_SEK',
+            'NZD_USD'
+        ];
+
+        var urlBase = 'http://api-sandbox.oanda.com/v1/instruments/';
+        var urlSuffix = '/candles?count=5&granularity=H12';
+        $.each(pairs, function (i, pair) {
+            var url = urlBase + pair + urlSuffix;
+            $.ajax({ url: url }).then(_onDataGet);
         });
-
-        document.body.innerHTML = '';
-        document.body.appendChild(chartView.render().element);
-
 
 
         // $.get('http://api-sandbox.oanda.com/v1/instruments/EUR_USD/candles?count=2&granularity=D');

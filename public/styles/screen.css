@@ -133,6 +133,20 @@ body {
     position: relative;
 }
 
+.chart-times td {
+    height: 12px;
+    border-top: solid 1px #CCCCCC;
+    font-size: 11px;
+    text-align: center;
+}
+
+.chart-head {
+    font-weight: bold;
+    color: #000000;
+    text-shadow: 0 1px rgba(255, 255, 255, 0.3);
+    padding-bottom: 20px;
+}
+
 .candle {
     position: absolute;
     top: 50%;
@@ -153,7 +167,7 @@ body {
 }
 
 .candle_dancing-bear {
-    opacity: 0.6;
+    opacity: 0.5;
 }
 
 .candle-wick {

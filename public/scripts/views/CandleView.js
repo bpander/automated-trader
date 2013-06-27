@@ -44,9 +44,9 @@ define([
         }
 
         if (this.model.complete) {
-            $(this.candle).removeClass('candle_dancing-bear');
+            $(this.element).removeClass('candle_dancing-bear');
         } else {
-            $(this.candle).addClass('candle_dancing-bear');
+            $(this.element).addClass('candle_dancing-bear');
         }
 
         return this;
