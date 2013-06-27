@@ -1,6 +1,8 @@
 define([
+    'jQuery',
     'views/View'
 ], function (
+    $,
     View
 ) {
     "use strict";
@@ -21,18 +23,32 @@ define([
 
     var _constructElement = function () {
         this.element = document.createElement('td');
+        this.element.innerHTML = '&nbsp;'
 
         this.candle = document.createElement('div');
-        this.candle.className = 'candle candle_bear';
+        this.candle.className = 'candle';
         this.element.appendChild(this.candle);
 
         this.wick = document.createElement('div');
-        this.wick.className = 'candle-wick candle-wick_bear';
-        this.candle.appendChild(this.wick);
+        this.wick.className = 'candle-wick';
+        this.element.appendChild(this.wick);
     };
 
     CandleView.prototype.render = function () {
-        // Add bear or bull classes here
+        if (this.model.isBull()) {
+            $(this.candle).removeClass('candle_bear').addClass('candle_bull');
+            $(this.wick).removeClass('candle-wick_bear').addClass('candle-wick_bull');
+        } else {
+            $(this.candle).removeClass('candle_bull').addClass('candle_bear');
+            $(this.wick).removeClass('candle-wick_bull').addClass('candle-wick_bear');
+        }
+
+        if (this.model.complete) {
+            $(this.candle).removeClass('candle_dancing-bear');
+        } else {
+            $(this.candle).addClass('candle_dancing-bear');
+        }
+
         return this;
     };
 

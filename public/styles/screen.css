@@ -152,6 +152,10 @@ body {
     background: linear-gradient(to right, #299a0b 0%, #75c431 100%);
 }
 
+.candle_dancing-bear {
+    opacity: 0.6;
+}
+
 .candle-wick {
     position: absolute;
     z-index: -1;

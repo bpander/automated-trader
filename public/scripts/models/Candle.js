@@ -1,28 +1,43 @@
 define([
-    'models/Model'
 ], function (
-    Model
 ) {
     "use strict";
 
     var Candle = function () {
-        Model.call(this);
 
-        this._properties.time = 0;
+        this.time = 0;
 
-        this._properties.highMid = 0;
+        this.highMid = 0;
 
-        this._properties.lowMid = 0;
+        this.lowMid = 0;
 
-        this._properties.openMid = 0;
+        this.openMid = 0;
 
-        this._properties.closeMid = 0;
+        this.closeMid = 0;
 
-        this._properties.complete = false;
+        this.complete = false;
 
     };
-    Candle.prototype = new Model();
-    Candle.prototype.constructor = Candle;
+
+    Candle.prototype.fromJSON = function (jsonObject) {
+        var prop = '';
+        for (prop in jsonObject) {
+            if (prop === 'complete') {
+                this.complete = jsonObject.complete === 'true' || jsonObject.complete === true;
+                continue;
+            }
+            if (this.hasOwnProperty(prop)) {
+                this[prop] = jsonObject[prop];
+            }
+        }
+
+        return this;
+    };
+
+    Candle.prototype.isBull = function () {
+        return this.closeMid > this.openMid;
+    };
+
 
     return Candle;
 });

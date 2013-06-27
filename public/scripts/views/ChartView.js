@@ -34,13 +34,13 @@ define([
         this.candleViews = [];
         var min = Number.MAX_VALUE;
         var max = 0;
-        $.each(this.model.get('candles'), function (i, candle) {
+        $.each(this.model.candles, function (i, candle) {
             var candleView = new CandleView(candle).render();
-            if (candle.get('highMid') > max) {
-                max = candle.get('highMid');
+            if (candle.highMid > max) {
+                max = candle.highMid;
             }
-            if (candle.get('lowMid') < min) {
-                min = candle.get('lowMid');
+            if (candle.lowMid < min) {
+                min = candle.lowMid;
             }
 
             // TODO: Abstract this out
@@ -53,11 +53,19 @@ define([
         $.each(this.candleViews, function (i, candleView) {
             var model = candleView.model;
 
-            var candleDelta = model.get('closeMid') - model.get('openMid');
+            var candleDelta = model.closeMid - model.openMid;
             candleView.candle.style.height = Math.abs(candleDelta) / delta * 100 + '%';
 
-            var deltaFromMax = max - model.get('highMid');
-            candleView.candle.style.top = deltaFromMax / delta * 100 + '%';
+            var candleTop = Math.max(model.openMid, model.closeMid);
+            var deltaTopFromMax = max - candleTop;
+            candleView.candle.style.top = deltaTopFromMax / delta * 100 + '%';
+
+            var wickDelta = model.highMid - model.lowMid;
+            candleView.wick.style.height = wickDelta / delta * 100 + '%';
+
+            var deltaWickFromMax = max - model.highMid;
+            candleView.wick.style.top = deltaWickFromMax / delta * 100 + '%';
+
         });
 
         return this;
