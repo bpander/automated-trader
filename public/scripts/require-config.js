@@ -1,7 +1,8 @@
 var require = {
 
     paths: {
-        'jQuery': 'jquery-private'
+        'jQuery': 'private/jquery-private',
+        'handlebars': 'private/handlebars-private'
     }
 
 };
