@@ -3,6 +3,9 @@ var app = express();
 var server = require('http').createServer(app);
 var path = require('path');
 var ejs = require('ejs');
+var OandaTicker = require('./models/tickers/OandaTicker.js');
+var StubTicker = require('./models/tickers/StubTicker.js');
+var BreakoutStrategy = require('./models/strategies/BreakoutStrategy.js');
 
 // Middleware
 app.set('port', process.env.TEST_PORT || 80);
@@ -17,6 +20,10 @@ app.engine('html', ejs.renderFile);
 app.get('/', function (req, res) {
     res.render(__dirname + '/views/index.html');
 });
+
+var breakoutStrategy = new BreakoutStrategy();
+var ticker = new OandaTicker(server);
+ticker.addStrategy(breakoutStrategy);
 
 server.listen(app.get('port'), function () {
     console.log('Express server listening on port ' + app.get('port'));
