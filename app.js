@@ -3,6 +3,7 @@ var app = express();
 var server = require('http').createServer(app);
 var path = require('path');
 var ejs = require('ejs');
+var nano = require('nano')('http://automatedtrader.iriscouch.com');
 var OandaTicker = require('./models/tickers/OandaTicker.js');
 var StubTicker = require('./models/tickers/StubTicker.js');
 var BreakoutStrategy = require('./models/strategies/BreakoutStrategy.js');
