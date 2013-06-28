@@ -23,7 +23,7 @@ app.get('/', function (req, res) {
 });
 
 var breakoutStrategy = new BreakoutStrategy();
-var ticker = new OandaTicker(server);
+var ticker = new StubTicker(server);
 ticker.addStrategy(breakoutStrategy);
 
 server.listen(app.get('port'), function () {
