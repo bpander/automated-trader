@@ -1,15 +1,17 @@
+var events = require('events');
+
 /**
- * This provides the base functionality for a ticker. A ticker is meant to get stock data and emit it to the strategies bound to it.
+ * This provides the base functionality for a ticker. A ticker is meant to get stock data and emit it to the AutomatedTrader.
  * @class
  */
-var Ticker = function () {
+function Ticker () {
+    events.EventEmitter.call(this);
+}
+Ticker.prototype = new events.EventEmitter();
+Ticker.prototype.constructor = Ticker;
 
-    /**
-     * The collection of strategies bound to this ticker
-     * @type {Strategy[]}
-     */
-    this.strategies = [];
-
+Ticker.prototype.start = function () {
+    throw new Error('Method does not have implementation');
 };
 
 /**
@@ -18,21 +20,8 @@ var Ticker = function () {
  * @return {Ticker}
  */
 Ticker.prototype.tick = function (data) {
-    var i = this.strategies.length;
-    while (i-- !== 0) {
-        this.strategies[i].tick(data);
-    }
+    this.emit('tick', data);
     return this;
-};
-
-/**
- * Add a strategy to this ticker
- * @param  {Strategy} strategy  When added to this ticker, the strategy's `start` method will be invoked. Its `tick` method will be invoked whenever the ticker invokes ITS `tick` method.`
- * @return {Ticker}
- */
-Ticker.prototype.addStrategy = function (strategy) {
-    this.strategies.push(strategy);
-    strategy.start();
 };
 
 

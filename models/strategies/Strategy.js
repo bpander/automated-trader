@@ -1,8 +1,8 @@
-var Strategy = function () {
+function Strategy () {
 
     this.friendlyName = '';
 
-};
+}
 
 Strategy.prototype.start = function () {
     throw new Error('Method does not have implementation');

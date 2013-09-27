@@ -1,19 +1,28 @@
 var Ticker = require('./Ticker.js');
+var fs = require('fs');
 
-var StubTicker = function (server) {
+function StubTicker () {
     Ticker.call(this);
-
-    // _init.call(this);
-};
+}
 StubTicker.prototype = new Ticker();
 StubTicker.prototype.constructor = StubTicker;
 
-var _init = function () {
-    setInterval(function () {
+StubTicker.prototype.start = function () {
 
-        this.tick(Math.random());
+    var stubData = JSON.parse(fs.readFileSync('./public/json/USD_JPY.json'));
+    var i = 0;
+    var l = stubData.candles.length;
 
-    }.bind(this), 1000);
+    var timeoutId = setInterval(function () {
+
+        this.tick(stubData.candles[i]);
+        i++;
+        if (i === l) {
+            clearTimeout(timeoutId);
+        }
+
+    }.bind(this), 500);
+
 };
 
 

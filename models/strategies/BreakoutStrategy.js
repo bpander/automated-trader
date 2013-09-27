@@ -5,10 +5,10 @@ var Strategy = require('./Strategy.js');
 var Pair = require('../Pair.js');
 var DataProvider = require('../DataProvider.js');
 
-var BreakoutStrategy = function() {
+function BreakoutStrategy () {
     Strategy.call(this);
 
-    this.friendlyName = 'Breakout';
+    this.friendlyName = 'Breakout Strategy';
 
 };
 BreakoutStrategy.prototype = new Strategy();
@@ -23,7 +23,7 @@ BreakoutStrategy.prototype.start = function () {
 };
 
 BreakoutStrategy.prototype.tick = function (data) {
-
+    console.log('breakout', data);
 };
 
 BreakoutStrategy.prototype.test = function (data) {

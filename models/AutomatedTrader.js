@@ -1,14 +1,35 @@
-var OandaTicker = require('./tickers/OandaTicker.js');
-var StubTicker = require('./tickers/StubTicker.js');
-var BreakoutStrategy = require('./strategies/BreakoutStrategy.js');
+function AutomatedTrader () {
 
+    this.strategies = [];
 
-var AutomatedTrader = function (server) {
+    this.tickers = [];
 
-    this.breakoutStrategy = new BreakoutStrategy();
-    this.ticker = new StubTicker(server);
-    this.ticker.addStrategy(this.breakoutStrategy);
+    this._onTick = this._onTick.bind(this);
 
+}
+
+AutomatedTrader.prototype.useStrategy = function (strategy) {
+    this.strategies.push(strategy);
+    return this;
+};
+
+AutomatedTrader.prototype.useTicker = function (ticker) {
+    this.tickers.push(ticker);
+    ticker.on('tick', this._onTick);
+    return this;
+}
+
+AutomatedTrader.prototype.start = function () {
+    this.tickers.forEach(function (ticker) {
+        ticker.start();
+    });
+    return this;
+};
+
+AutomatedTrader.prototype._onTick = function (data) {
+    this.strategies.forEach(function (strategy) {
+        strategy.tick(data);
+    });
 };
 
 module.exports = AutomatedTrader;
