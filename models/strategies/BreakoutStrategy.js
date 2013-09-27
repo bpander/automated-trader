@@ -2,11 +2,12 @@ var request = require('request');
 var http = require('http');
 var Deferred = require('promised-io/promise').Deferred;
 var Strategy = require('./Strategy.js');
-var Pair = require('../Pair.js');
-var DataProvider = require('../DataProvider.js');
+var Candle = require('../Candle.js');
 
 function BreakoutStrategy () {
     Strategy.call(this);
+
+    this.run = [];
 
     this.friendlyName = 'Breakout Strategy';
 
@@ -14,16 +15,19 @@ function BreakoutStrategy () {
 BreakoutStrategy.prototype = new Strategy();
 BreakoutStrategy.prototype.constructor = BreakoutStrategy;
 
-var _isInsideCandle = function (baseCandle, counterCandle) {
-    return baseCandle.lowMid > counterCandle.lowMid && baseCandle.highMid < counterCandle.highMid;
-};
-
 BreakoutStrategy.prototype.start = function () {
 
 };
 
 BreakoutStrategy.prototype.tick = function (data) {
-    console.log('breakout', data);
+    var candle = new Candle().fromJSON(data);
+
+    var previousCandle = this.run.slice(-1)[0];
+    if (candle.isInside(previousCandle)) {
+        this.run.push(candle);
+    } else {
+        this.run = [ candle ];
+    }
 };
 
 BreakoutStrategy.prototype.test = function (data) {
