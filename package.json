@@ -1,17 +1,15 @@
 {
-    "name": "AutomatedTrader",
-    "version": "0.0.1",
-    "private": false,
-    "scripts": {
-        "start": "node app.js"
-    },
-    "dependencies": {
-        "express": "3.1.1",
-        "socket.io":"0.9.14",
-        "socket.io-client": "0.9.16",
-        "ejs": "0.8.4",
-        "nano": "3.4.0",
-        "request": "2.21.0",
-        "promised-io": "0.3.3"
-    }
+  "name": "AutomatedTrader",
+  "version": "0.0.1",
+  "private": false,
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "3.1.1",
+    "socket.io": "0.9.14",
+    "socket.io-client": "0.9.16",
+    "ejs": "0.8.4",
+    "q": "~0.9.7"
+  }
 }

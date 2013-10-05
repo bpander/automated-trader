@@ -9,19 +9,12 @@ StubTicker.prototype.constructor = StubTicker;
 
 StubTicker.prototype.start = function () {
 
-    var stubData = JSON.parse(fs.readFileSync('./public/json/USD_JPY.json'));
+    var quotes = JSON.parse(fs.readFileSync('./public/json/historical.json'));
     var i = 0;
-    var l = stubData.candles.length;
-
-    var timeoutId = setInterval(function () {
-
-        this.tick(stubData.candles[i]);
-        i++;
-        if (i === l) {
-            clearTimeout(timeoutId);
-        }
-
-    }.bind(this), 500);
+    var l = quotes.length;
+    for (; i !== l; i++) {
+        this.tick(quotes[i].prices[0]);
+    }
 
 };
 

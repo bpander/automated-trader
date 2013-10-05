@@ -7,27 +7,26 @@ var Candle = require('../Candle.js');
 function BreakoutStrategy () {
     Strategy.call(this);
 
+    this.friendlyName = 'Breakout Strategy';
+
     this.run = [];
 
-    this.friendlyName = 'Breakout Strategy';
+    this.candleCheckTime = new Date(0);
 
 };
 BreakoutStrategy.prototype = new Strategy();
 BreakoutStrategy.prototype.constructor = BreakoutStrategy;
 
-BreakoutStrategy.prototype.start = function () {
-
-};
-
 BreakoutStrategy.prototype.tick = function (data) {
-    var candle = new Candle().fromJSON(data);
+    // console.log('data', data);
+    // var candle = new Candle().fromJSON(data);
 
-    var previousCandle = this.run.slice(-1)[0];
-    if (candle.isInside(previousCandle)) {
-        this.run.push(candle);
-    } else {
-        this.run = [ candle ];
-    }
+    // var previousCandle = this.run.slice(-1)[0];
+    // if (candle.isInside(previousCandle)) {
+    //     this.run.push(candle);
+    // } else {
+    //     this.run = [ candle ];
+    // }
 };
 
 BreakoutStrategy.prototype.test = function (data) {
