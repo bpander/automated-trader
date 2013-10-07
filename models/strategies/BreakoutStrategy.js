@@ -1,6 +1,5 @@
 var Strategy = require('./Strategy.js');
 var Candle = require('../Candle.js');
-var Order = require('../Order.js');
 
 function BreakoutStrategy () {
     Strategy.call(this);
@@ -49,13 +48,15 @@ BreakoutStrategy.prototype.tick = function (quote) {
 
     if (this.currentCandle.isInside(this.run.slice(-1)[0])) {
         this.run.push(this.currentCandle);
-        new Order().fromJSON({
+        this.order({
             instrument: quote.instrument,
             units:      1,
             expiry:     new Date(quote.time + 1000 * 60 * 60 * 4).toISOString(),
-            price:      quote.price + 0.01,
+            price:      quote.ask + 0.001,
             side:       'buy',
-            type:       'stop'
+            type:       'stop',
+            stopLoss:   quote.ask,
+            takeProfit: Math.max(this.run[0].open, this.run[0].close)
         });
     } else {
         this.run = [ this.currentCandle ];

@@ -12,8 +12,6 @@ function Candle () {
 
     this.high = 0.000;
 
-    this.duration = 0;
-
 }
 
 Candle.prototype.isInside = function (candle) {

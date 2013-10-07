@@ -6,6 +6,7 @@ var ejs = require('ejs');
 var AutomatedTrader = require('./models/AutomatedTrader.js');
 var BreakoutStrategy = require('./models/strategies/BreakoutStrategy.js');
 var StubTicker = require('./models/tickers/StubTicker.js');
+var StubBroker = require('./models/brokers/StubBroker.js');
 
 // Configuration
 app.set('port', process.env.TEST_PORT || 80);
@@ -26,4 +27,5 @@ app.get('/', function (req, res) {
 var automatedTrader = new AutomatedTrader();
 var strategy = new BreakoutStrategy();
 var ticker = new StubTicker();
-automatedTrader.useStrategy(strategy).useTicker(ticker).start();
+var broker = new StubBroker();
+automatedTrader.useStrategy(strategy).useTicker(ticker).useBroker(broker).start();
