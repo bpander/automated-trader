@@ -1,8 +1,6 @@
-var request = require('request');
-var http = require('http');
-var Deferred = require('promised-io/promise').Deferred;
 var Strategy = require('./Strategy.js');
 var Candle = require('../Candle.js');
+var Order = require('../Order.js');
 
 function BreakoutStrategy () {
     Strategy.call(this);
@@ -11,22 +9,59 @@ function BreakoutStrategy () {
 
     this.run = [];
 
-    this.candleCheckTime = new Date(0);
+    this.currentCandle = null;
+
+    this.candleCheckTime = 0;
+
+    this.candleDuration = 1000 * 60 * 60 * 12;
 
 };
 BreakoutStrategy.prototype = new Strategy();
 BreakoutStrategy.prototype.constructor = BreakoutStrategy;
 
-BreakoutStrategy.prototype.tick = function (data) {
-    // console.log('data', data);
-    // var candle = new Candle().fromJSON(data);
+BreakoutStrategy.prototype.tick = function (quote) {
 
-    // var previousCandle = this.run.slice(-1)[0];
-    // if (candle.isInside(previousCandle)) {
-    //     this.run.push(candle);
-    // } else {
-    //     this.run = [ candle ];
-    // }
+    if (this.currentCandle === null) {
+        this.currentCandle = new Candle();
+        this.currentCandle.start = quote.time;
+        this.currentCandle.open = quote.ask;
+        this.currentCandle.low = quote.ask;
+        this.currentCandle.high = quote.ask;
+        this.candleCheckTime = quote.time + this.candleDuration;
+    } else {
+
+        if (quote.ask > this.currentCandle.high) {
+            this.currentCandle.high = quote.ask;
+        } else if (quote.ask < this.currentCandle.low) {
+            this.currentCandle.low = quote.ask;
+        }
+
+    }
+
+    // We're still on the same candle
+    if (quote.time < this.candleCheckTime) {
+        return;
+    }
+
+    // The previous candle is finished. Close it out and start a new candle.
+    this.currentCandle.close = quote.ask;
+    this.currentCandle.stop = quote.time;
+
+    if (this.currentCandle.isInside(this.run.slice(-1)[0])) {
+        this.run.push(this.currentCandle);
+        new Order().fromJSON({
+            instrument: quote.instrument,
+            units:      1,
+            expiry:     new Date(quote.time + 1000 * 60 * 60 * 4).toISOString(),
+            price:      quote.price + 0.01,
+            side:       'buy',
+            type:       'stop'
+        });
+    } else {
+        this.run = [ this.currentCandle ];
+    }
+
+    this.currentCandle = null;
 };
 
 BreakoutStrategy.prototype.test = function (data) {

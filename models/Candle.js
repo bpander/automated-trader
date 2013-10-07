@@ -1,34 +1,23 @@
 function Candle () {
 
-    this.complete; //"true"
+    this.start = 0;
 
-    this.highMid; //93.18
+    this.stop = 0;
 
-    this.lowMid; //92.207
+    this.open = 0.000;
 
-    this.openMid; //93.141
+    this.close = 0.000;
 
-    this.closeMid; //92.38
+    this.low = 0.000;
 
-    this.time; //1359972000
+    this.high = 0.000;
+
+    this.duration = 0;
 
 }
 
-Candle.prototype.fromJSON = function (json) {
-    this.closeMid = json.closeMid;
-    this.complete = json.complete || json.complete === 'true';
-    this.highMid = json.highMid;
-    this.lowMid = json.lowMid;
-    this.time = new Date(json.time * 1000);
-
-    return this;
-};
-
 Candle.prototype.isInside = function (candle) {
-    if (candle instanceof Candle === false) {
-        return false;
-    }
-    return this.lowMid > candle.lowMid && this.highMid < candle.highMid;
+    return candle instanceof Candle ? this.low > candle.low && this.high < candle.high : false;
 };
 
 module.exports = Candle;
