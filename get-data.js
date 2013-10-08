@@ -3,6 +3,11 @@ var fs = require('fs');
 var querystring = require('querystring');
 var Q = require('q');
 
+var SETTINGS = {
+    INSTRUMENT: process.argv[2] || 'USD_JPY',
+    DAYS: parseInt(process.argv[3]) || 30
+};
+
 var _oandaCall = function (module, params, version) {
     version = version || 'v1';
     var baseUrl = 'http://api-sandbox.oanda.com';
@@ -25,10 +30,10 @@ var _oandaCall = function (module, params, version) {
 var ticks = [];
 
 var _accumulateData = function (start) {
-    start = start || new Date(Date.now() - 1000 * 60 * 60 * 24 * 30);
+    start = start || new Date(Date.now() - 1000 * 60 * 60 * 24 * SETTINGS.DAYS);
     var dfd = Q.defer();
     var params = {
-        instrument:     'USD_JPY',
+        instrument:     SETTINGS.INSTRUMENT,
         candleFormat:   'bidask',
         granularity:    'S10',
         count:          5000,

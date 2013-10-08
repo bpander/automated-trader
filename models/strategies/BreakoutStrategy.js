@@ -50,13 +50,14 @@ BreakoutStrategy.prototype.tick = function (quote) {
         this.run.push(this.currentCandle);
         this.order({
             instrument: quote.instrument,
-            units:      1,
+            time:       new Date(quote.time).toISOString(), // Dev purposes only, this gets set server-side
+            units:      10,
             expiry:     new Date(quote.time + 1000 * 60 * 60 * 4).toISOString(),
-            price:      quote.ask + 0.001,
+            price:      quote.ask - 0.001,
             side:       'buy',
             type:       'stop',
             stopLoss:   quote.ask,
-            takeProfit: Math.max(this.run[0].open, this.run[0].close)
+            takeProfit: Math.min(this.run[0].open, this.run[0].close) - 0.01
         });
     } else {
         this.run = [ this.currentCandle ];

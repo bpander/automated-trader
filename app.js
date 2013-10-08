@@ -29,3 +29,7 @@ var strategy = new BreakoutStrategy();
 var ticker = new StubTicker();
 var broker = new StubBroker();
 automatedTrader.useStrategy(strategy).useTicker(ticker).useBroker(broker).start();
+
+console.log('balance', broker.balance);
+console.log('open orders', broker.orders.open);
+console.log('active orders', broker.orders.active);
