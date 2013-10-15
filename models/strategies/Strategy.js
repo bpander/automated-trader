@@ -26,4 +26,11 @@ Strategy.prototype.order = function (order) {
 };
 
 
+Strategy.prototype.getBalance = function () {
+    return this.brokers.reduce(function (previous, current) {
+        return previous + current.balance;
+    }, 0);
+};
+
+
 module.exports = Strategy;

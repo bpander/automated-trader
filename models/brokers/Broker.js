@@ -1,5 +1,7 @@
 function Broker () {
 
+    this.balance = 0;
+
     this.tick = this.tick.bind(this);
 
     this.order = this.order.bind(this);

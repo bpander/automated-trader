@@ -51,7 +51,7 @@ BreakoutStrategy.prototype.tick = function (quote) {
         this.order({
             instrument: quote.instrument,
             time:       new Date(quote.time).toISOString(), // Dev purposes only, this gets set server-side
-            units:      10,
+            units:      this.getBalance() * 0.20,
             expiry:     new Date(quote.time + 1000 * 60 * 60 * 4).toISOString(),
             price:      quote.ask - 0.001,
             side:       'buy',
