@@ -28,7 +28,7 @@ var automatedTrader = new AutomatedTrader();
 var strategy = new BreakoutStrategy();
 var ticker = new StubTicker();
 var broker = new StubBroker();
-automatedTrader.useStrategy(strategy).useTicker(ticker).useBroker(broker).start();
+automatedTrader.useTicker(ticker.useStrategy(strategy.useBroker(broker))).start();
 
 var _reduceFn = function (previous, current) {
     return previous + current.price;

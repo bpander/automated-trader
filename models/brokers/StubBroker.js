@@ -16,13 +16,13 @@ function StubBroker () {
 StubBroker.prototype = new Broker();
 StubBroker.prototype.constructor = StubBroker;
 
-StubBroker.prototype.tick = function (tick) {
+StubBroker.prototype.tick = function (quote) {
     var order;
     var i = this.orders.open.length;
 
     while (i--) {
         order = this.orders.open[i];
-        if (tick.ask <= order.price) {
+        if (quote.ask <= order.price) {
             this.orders.active.push(order);
             this.orders.open.splice(i, 1);
             this.balance = this.balance - order.units;
@@ -32,9 +32,9 @@ StubBroker.prototype.tick = function (tick) {
     i = this.orders.active.length;
     while (i--) {
         order = this.orders.active[i];
-        if (tick.bid <= order.takeProfit || tick.bid >= order.stopLoss) {
+        if (quote.bid <= order.takeProfit || quote.bid >= order.stopLoss) {
             this.orders.active.splice(i, 1);
-            this.balance = this.balance + order.price / tick.bid * order.units;
+            this.balance = this.balance + order.price / quote.bid * order.units;
         }
     }
 };

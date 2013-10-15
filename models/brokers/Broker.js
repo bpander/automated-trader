@@ -6,12 +6,15 @@ function Broker () {
 
 }
 
-Broker.prototype.tick = function (data) {
+
+Broker.prototype.tick = function (quote) {
     throw new Error('method not implemented');
 };
 
-Broker.prototype.order = function (data) {
+
+Broker.prototype.order = function (order) {
     throw new Error('method not implemented');
 };
+
 
 module.exports = Broker;
