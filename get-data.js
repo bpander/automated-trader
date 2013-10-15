@@ -35,7 +35,7 @@ var _accumulateData = function (start) {
     var params = {
         instrument:     SETTINGS.INSTRUMENT,
         candleFormat:   'bidask',
-        granularity:    'S10',
+        granularity:    'S5',
         count:          5000,
         start:          start.toISOString(),
         includeFirst:   false

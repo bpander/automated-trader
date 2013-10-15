@@ -10,6 +10,8 @@ function StubBroker () {
 
     this.balance = 0;
 
+    this.numOrders = 0;
+
 }
 StubBroker.prototype = new Broker();
 StubBroker.prototype.constructor = StubBroker;
@@ -38,6 +40,7 @@ StubBroker.prototype.tick = function (tick) {
 };
 
 StubBroker.prototype.order = function (order) {
+    this.numOrders = this.numOrders + 1;
     this.orders.open.push(order);
 };
 

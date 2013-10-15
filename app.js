@@ -30,6 +30,10 @@ var ticker = new StubTicker();
 var broker = new StubBroker();
 automatedTrader.useStrategy(strategy).useTicker(ticker).useBroker(broker).start();
 
+var _reduceFn = function (previous, current) {
+    return previous + current.price;
+};
 console.log('balance', broker.balance);
-console.log('open orders', broker.orders.open);
-console.log('active orders', broker.orders.active);
+console.log('open orders', broker.orders.open.reduce(_reduceFn, 0));
+console.log('active orders', broker.orders.active.reduce(_reduceFn, 0));
+console.log('total orders', broker.numOrders);
