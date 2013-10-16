@@ -30,10 +30,15 @@ var ticker = new StubTicker();
 var broker = new StubBroker();
 automatedTrader.useTicker(ticker.useStrategy(strategy.useBroker(broker))).start();
 
-var _reduceFn = function (previous, current) {
+var open = broker.orders.open.reduce(function (previous, current) {
     return previous + current.units;
-};
-console.log('balance', broker.balance);
-console.log('open orders', broker.orders.open.reduce(_reduceFn, 0));
-console.log('active orders', broker.orders.active.reduce(_reduceFn, 0));
-console.log('total orders', broker.numOrders);
+}, 0);
+var active = broker.orders.active.reduce(function (previous, current) {
+    return previous + current.price / strategy.lastTick.bid * current.units;
+}, 0);
+console.log('seed money:', broker.seedMoney);
+console.log('total orders made:', broker.numOrders);
+console.log('balance:', broker.balance);
+console.log('open orders:', open);
+console.log('active orders:', active);
+console.log('net gains after liquidation:', broker.balance + open + active - broker.seedMoney);

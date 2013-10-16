@@ -8,7 +8,9 @@ function StubBroker () {
         active: []
     };
 
-    this.balance = 100;
+    this.seedMoney = 100;
+
+    this.balance = this.seedMoney;
 
     this.numOrders = 0;
 
@@ -25,6 +27,9 @@ StubBroker.prototype.tick = function (quote) {
         if (quote.ask <= order.price) {
             this.orders.active.push(order);
             this.orders.open.splice(i, 1);
+        } else if (order.expiry <= quote.time) {
+            this.orders.open.splice(i, 1);
+            this.balance = this.balance + order.units;
         }
     }
 

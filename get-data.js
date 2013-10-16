@@ -4,7 +4,7 @@ var querystring = require('querystring');
 var Q = require('q');
 
 var SETTINGS = {
-    INSTRUMENT: process.argv[2] || 'USD_JPY',
+    INSTRUMENT: process.argv[2] || 'USD_GBP',
     DAYS: parseInt(process.argv[3]) || 30
 };
 
