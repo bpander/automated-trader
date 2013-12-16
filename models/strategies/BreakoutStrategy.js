@@ -1,4 +1,5 @@
 var Strategy = require('./Strategy.js');
+var Quote = require('../Quote.js');
 var Candle = require('../Candle.js');
 
 function BreakoutStrategy () {
@@ -6,36 +7,71 @@ function BreakoutStrategy () {
 
     this.friendlyName = 'Breakout Strategy';
 
-    this.run = [];
+    this.candleDuration = 1000 * 60 * 60 * 24;
 
-    this.currentCandle = null;
+    this.currentCandle = new Candle();
 
-    this.candleCheckTime = 0;
+    this.candles = [];
 
-    this.candleDuration = 1000;
+    this.mean = {
+        upper: 0.0000,
+        lower: 0.0000
+    };
+
+    this.standardDeviation = {
+        upper: 0,
+        lower: 0
+    };
 
 };
 BreakoutStrategy.prototype = new Strategy();
 BreakoutStrategy.prototype.constructor = BreakoutStrategy;
 
-BreakoutStrategy.prototype.tick = function (quote) {
-    this.lastTick = quote;
 
-    if (quote.ask > 90.1735 - 0.01) {
-        this.run.push(this.currentCandle);
+BreakoutStrategy.prototype.tick = function (quote) {
+    var self = this;
+    if (quote.time > this.currentCandle.time + this.candleDuration) {
+
+        // Close out current candle
+        this.currentCandle.close = quote.ask;
+
+        this.mean.upper = this.candles.reduce(function (previous, current) {
+            return previous + current.high;
+        }, 0) / this.candles.length;
+        this.standardDeviation.upper = Math.sqrt(this.candles.reduce(function (previous, current) {
+            return previous + Math.pow(current.high - self.mean.upper, 2);
+        }, 0) / this.candles.length);
+
+        this.mean.lower = this.candles.reduce(function (previous, current) {
+            return previous + current.low;
+        }, 0) / this.candles.length;
+        this.standardDeviation.lower = Math.sqrt(this.candles.reduce(function (previous, current) {
+            return previous + Math.pow(current.low - self.mean.lower, 2);
+        }, 0) / this.candles.length);
+
+        // Open new candle
+        this.currentCandle = new Candle();
+        this.currentCandle.time = quote.time;
+        this.currentCandle.open = quote.ask;
+        this.candles.push(this.currentCandle);
+    }
+
+    this.currentCandle.high = Math.max(this.currentCandle.high, quote.ask);
+    this.currentCandle.low = Math.min(this.currentCandle.low, quote.ask);
+
+    if (quote.ask > this.mean.upper - (this.standardDeviation.upper / 4)) {
         this.order({
             instrument: quote.instrument,
             time:       new Date(quote.time).toISOString(), // Dev purposes only, this gets set server-side
             units:      this.getBalance() * 0.333333,
-            expiry:     new Date(quote.time + 1000 * 60 * 4).getTime(), //.toISOString(),
-            price:      quote.ask - 0.001,
+            expiry:     new Date(quote.time + 1000 * 60).getTime(), //.toISOString(),
+            price:      quote.ask - 0.0001,
             side:      'buy',
             type:      'stop',
-            stopLoss:   quote.ask,
-            takeProfit: 87.9945 + 0.01
+            stopLoss:   0,
+            takeProfit: this.mean.lower + (this.standardDeviation / 4)
         });
     }
-
 };
 
 

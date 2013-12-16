@@ -16,7 +16,10 @@ Ticker.prototype.useStrategy = function (strategy) {
 
 
 Ticker.prototype.start = function () {
-    throw new Error('Method does not have implementation');
+    this.strategies.forEach(function (strategy) {
+        strategy.start();
+    });
+    return this;
 };
 
 

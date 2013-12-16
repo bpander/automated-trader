@@ -1,6 +1,7 @@
 var Ticker = require('./Ticker.js');
 var Quote = require('../Quote.js');
-var fs = require('fs');
+var USDJPY = require('../pairs/USDJPY.js');
+var q = require('q');
 
 function StubTicker () {
     Ticker.call(this);
@@ -9,12 +10,18 @@ StubTicker.prototype = new Ticker();
 StubTicker.prototype.constructor = StubTicker;
 
 StubTicker.prototype.start = function () {
+    Ticker.prototype.start.call(this);
+    var self = this;
+    var dfd = q.defer();
+    var pair = new USDJPY();
+    pair.getHistoricalData().then(function (quotes) {
+        quotes.forEach(function (quote) {
+            self.tick(quote);
+        });
+        dfd.resolve();
+    });
 
-    var quotes = JSON.parse(fs.readFileSync('./public/json/historical.json'));
-    quotes.forEach(function (quote) {
-        this.tick(new Quote().fromJSON(quote.prices[0]));
-    }, this);
-
+    return dfd.promise;
 };
 
 

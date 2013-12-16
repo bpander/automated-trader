@@ -1,3 +1,5 @@
+var q = require('q');
+
 function AutomatedTrader () {
 
     this.tickers = [];
@@ -10,10 +12,9 @@ AutomatedTrader.prototype.useTicker = function (ticker) {
 };
 
 AutomatedTrader.prototype.start = function () {
-    this.tickers.forEach(function (ticker) {
-        ticker.start();
-    });
-    return this;
+    return q.all(this.tickers.map(function (ticker) {
+        return ticker.start();
+    }));
 };
 
 

@@ -28,17 +28,19 @@ var automatedTrader = new AutomatedTrader();
 var strategy = new BreakoutStrategy();
 var ticker = new StubTicker();
 var broker = new StubBroker();
-automatedTrader.useTicker(ticker.useStrategy(strategy.useBroker(broker))).start();
+automatedTrader.useTicker(ticker.useStrategy(strategy.useBroker(broker))).start().then(function () {
 
-var open = broker.orders.open.reduce(function (previous, current) {
-    return previous + current.units;
-}, 0);
-var active = broker.orders.active.reduce(function (previous, current) {
-    return previous + current.price / strategy.lastTick.bid * current.units;
-}, 0);
-console.log('seed money:', broker.seedMoney);
-console.log('total orders made:', broker.numOrders);
-console.log('balance:', broker.balance);
-console.log('open orders:', open);
-console.log('active orders:', active);
-console.log('net gains after liquidation:', broker.balance + open + active - broker.seedMoney);
+    var open = broker.orders.open.reduce(function (previous, current) {
+        return previous + current.units;
+    }, 0);
+    var active = broker.orders.active.reduce(function (previous, current) {
+        return previous + current.price / strategy.lastTick.bid * current.units;
+    }, 0);
+    console.log('seed money:', broker.seedMoney);
+    console.log('total orders made:', broker.numOrders);
+    console.log('balance:', broker.balance);
+    console.log('open orders:', open);
+    console.log('active orders:', active);
+    console.log('net gains after liquidation:', broker.balance + open + active - broker.seedMoney);
+
+});

@@ -7,6 +7,11 @@ function Strategy () {
 }
 
 
+Strategy.prototype.start = function () {
+
+};
+
+
 Strategy.prototype.tick = function (quote) {
     throw new Error('Method does not have implementation');
 };
