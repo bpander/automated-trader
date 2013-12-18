@@ -23,6 +23,10 @@ function BreakoutStrategy () {
         lower: 0
     };
 
+    this.lastTick = null;
+
+    this.minimumBalance = 1.0000;
+
 };
 BreakoutStrategy.prototype = new Strategy();
 BreakoutStrategy.prototype.constructor = BreakoutStrategy;
@@ -30,6 +34,7 @@ BreakoutStrategy.prototype.constructor = BreakoutStrategy;
 
 BreakoutStrategy.prototype.tick = function (quote) {
     var self = this;
+    this.lastTick = quote;
     if (quote.time > this.currentCandle.time + this.candleDuration) {
 
         // Close out current candle
@@ -56,15 +61,20 @@ BreakoutStrategy.prototype.tick = function (quote) {
         this.candles.push(this.currentCandle);
     }
 
+    if (this.candles.length <= 5) {
+        return;
+    }
+
     this.currentCandle.high = Math.max(this.currentCandle.high, quote.ask);
     this.currentCandle.low = Math.min(this.currentCandle.low, quote.ask);
+    var balance = this.getBalance();
 
-    if (quote.ask > this.mean.upper - (this.standardDeviation.upper / 4)) {
+    if (quote.ask > this.mean.upper - (this.standardDeviation.upper / 4) && balance > this.minimumBalance) {
         this.order({
             instrument: quote.instrument,
             time:       new Date(quote.time).toISOString(), // Dev purposes only, this gets set server-side
-            units:      this.getBalance() * 0.333333,
-            expiry:     new Date(quote.time + 1000 * 60).getTime(), //.toISOString(),
+            units:      balance * 0.2,
+            expiry:     new Date(quote.time + 1000 * 60 * 2).getTime(), //.toISOString(),
             price:      quote.ask - 0.0001,
             side:      'buy',
             type:      'stop',

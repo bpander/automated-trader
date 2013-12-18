@@ -1,17 +1,12 @@
-var Candle = require('../Candle.js');
 var Quote = require('../Quote.js');
 var q = require('q');
 var csv = require('csv');
 
-function Pair () {
+function Pair (base, counter) {
 
-    this.base = '';
+    this.base = base;
 
-    this.counter = '';
-
-    this.pip = 0.00;
-
-    this.spread = 0.00;
+    this.counter = counter;
 
 };
 
