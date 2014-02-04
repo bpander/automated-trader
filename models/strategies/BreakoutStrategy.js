@@ -69,18 +69,19 @@ BreakoutStrategy.prototype.tick = function (quote) {
     }
 
     var balance = this.getBalance();
+    var confidence = quote.ask - (this.mean.upper - this.standardDeviation.upper * 2);
 
-    if (quote.ask > this.mean.upper - (this.standardDeviation.upper) && balance > this.minimumBalance) {
+    if (confidence > 0.3 && balance > this.minimumBalance) {
         this.order({
             instrument: quote.instrument,
             time:       new Date(quote.time).toISOString(), // Dev purposes only, this gets set server-side
-            units:      10 * quote.ask,
+            units:      Math.min(1, confidence * 2) * balance * quote.ask,
             expiry:     new Date(quote.time + 1000 * 5).getTime(), //.toISOString(),
             price:      quote.ask,
             side:      'buy',
             type:      'stop',
             stopLoss:   0,
-            takeProfit: this.mean.lower + (this.standardDeviation.lower)
+            takeProfit: this.mean.lower + (this.standardDeviation.lower * 1.25)
         });
     }
 };
