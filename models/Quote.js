@@ -24,8 +24,8 @@ Quote.prototype.fromArray = function (array) {
     var date = array[0];
     date = date.slice(0,4) + '/' + date.slice(4,6) + '/' + date.slice(6,8) + date.slice(8,11) + ':' + date.slice(11, 13) + ':' + date.slice(13, 15) + '.' + date.slice(15);
     this.time = new Date(date).getTime();
-    this.bid = array[1];
-    this.ask = array[2];
+    this.bid = +array[1];
+    this.ask = +array[2];
     return this;
 }
 

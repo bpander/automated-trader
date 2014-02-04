@@ -25,7 +25,7 @@ function BreakoutStrategy () {
 
     this.lastTick = null;
 
-    this.minimumBalance = 1.0000;
+    this.minimumBalance = 10.0000;
 
 };
 BreakoutStrategy.prototype = new Strategy();
@@ -61,25 +61,26 @@ BreakoutStrategy.prototype.tick = function (quote) {
         this.candles.push(this.currentCandle);
     }
 
+    this.currentCandle.high = Math.max(this.currentCandle.high, quote.ask);
+    this.currentCandle.low = Math.min(this.currentCandle.low, quote.ask);
+
     if (this.candles.length <= 5) {
         return;
     }
 
-    this.currentCandle.high = Math.max(this.currentCandle.high, quote.ask);
-    this.currentCandle.low = Math.min(this.currentCandle.low, quote.ask);
     var balance = this.getBalance();
 
-    if (quote.ask > this.mean.upper - (this.standardDeviation.upper / 4) && balance > this.minimumBalance) {
+    if (quote.ask > this.mean.upper - (this.standardDeviation.upper) && balance > this.minimumBalance) {
         this.order({
             instrument: quote.instrument,
             time:       new Date(quote.time).toISOString(), // Dev purposes only, this gets set server-side
-            units:      balance * 0.2,
-            expiry:     new Date(quote.time + 1000 * 60 * 2).getTime(), //.toISOString(),
-            price:      quote.ask - 0.0001,
+            units:      10 * quote.ask,
+            expiry:     new Date(quote.time + 1000 * 5).getTime(), //.toISOString(),
+            price:      quote.ask,
             side:      'buy',
             type:      'stop',
             stopLoss:   0,
-            takeProfit: this.mean.lower + (this.standardDeviation / 4)
+            takeProfit: this.mean.lower + (this.standardDeviation.lower)
         });
     }
 };
