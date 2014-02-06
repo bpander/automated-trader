@@ -40,7 +40,7 @@ automatedTrader.useTicker(ticker.useStrategy(strategy.useBroker(broker))).start(
     console.log('lastTick', strategy.lastTick);
     console.log('seed money:', broker.seedMoney);
     console.log('total orders made:', broker.numOrders);
-    console.log('orders per minute:', broker.numOrders / 31 / 24 / 60 );
+    console.log('orders per minute:', broker.numOrders / ((31 * 24 - 144) * 60) );
     console.log('balance:', broker.balance);
     console.log('open orders:', open);
     console.log('active orders:', active);
