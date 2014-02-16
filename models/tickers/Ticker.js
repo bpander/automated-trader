@@ -26,9 +26,7 @@ Ticker.prototype.start = function () {
 Ticker.prototype.tick = function (tick) {
     this.strategies.forEach(function (strategy) {
         strategy.tick(tick);
-        strategy.brokers.forEach(function (broker) {
-            broker.tick(tick);
-        });
+        strategy.broker.tick(tick);
     });
     return this;
 };

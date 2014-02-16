@@ -1,8 +1,10 @@
+var Broker = require('../brokers/Broker.js');
+
 function Strategy () {
 
     this.friendlyName = '';
 
-    this.brokers = [];
+    this.broker = new Broker();
 
 }
 
@@ -18,23 +20,8 @@ Strategy.prototype.tick = function (quote) {
 
 
 Strategy.prototype.useBroker = function (broker) {
-    this.brokers.push(broker);
+    this.broker = broker;
     return this;
-};
-
-
-Strategy.prototype.order = function (order) {
-    this.brokers.forEach(function (broker) {
-        broker.order(order);
-    });
-    return this;
-};
-
-
-Strategy.prototype.getBalance = function () {
-    return this.brokers.reduce(function (previous, current) {
-        return previous + current.balance;
-    }, 0);
 };
 
 

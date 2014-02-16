@@ -68,11 +68,11 @@ BreakoutStrategy.prototype.tick = function (quote) {
         return;
     }
 
-    var balance = this.getBalance();
+    var balance = this.broker.balance;
     var confidence = quote.ask - (this.mean.upper - this.standardDeviation.upper * 1.3);
 
     if (confidence > 0 && balance > this.minimumBalance) {
-        this.order({
+        this.broker.order({
             instrument: quote.instrument,
             time:       new Date(quote.time).toISOString(), // Dev purposes only, this gets set server-side
             units:      Math.min(confidence * 100, 1) * balance * quote.ask,
