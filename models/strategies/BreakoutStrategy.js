@@ -64,25 +64,36 @@ BreakoutStrategy.prototype.tick = function (quote) {
     this.currentCandle.high = Math.max(this.currentCandle.high, quote.ask);
     this.currentCandle.low = Math.min(this.currentCandle.low, quote.ask);
 
-    if (this.candles.length <= 5) {
+    if (this.candles.length <= 10) {
         return;
     }
 
     var balance = this.broker.balance;
-    var confidence = quote.ask - (this.mean.upper - this.standardDeviation.upper * 1.3);
+    var confidence;
+    var takeProfit;
+    var price;
+    var spread;
 
-    if (confidence > 0 && balance > this.minimumBalance) {
-        this.broker.order({
-            instrument: quote.instrument,
-            time:       new Date(quote.time).toISOString(), // Dev purposes only, this gets set server-side
-            units:      Math.min(confidence * 100, 1) * balance * quote.ask,
-            expiry:     new Date(quote.time + 1000 * 5).getTime(), //.toISOString(),
-            price:      quote.ask,
-            side:      'buy',
-            type:      'stop',
-            stopLoss:   0,
-            takeProfit: this.mean.lower + (this.standardDeviation.lower * 1.3)
-        });
+    if (balance > this.minimumBalance) {
+        confidence = quote.ask - (this.mean.upper - this.standardDeviation.upper * 1.2);
+        if (confidence > 0) {
+            takeProfit = this.mean.lower + this.standardDeviation.lower * 1.2;
+            price = quote.ask + 0.0001;
+            spread = price - takeProfit;
+            if (spread > 0.05) {
+                this.broker.order({
+                    instrument: quote.instrument,
+                    time:       quote.time, // Dev purposes only, this gets set server-side
+                    units:      10,
+                    expiry:     new Date(quote.time + 1000 * 15).getTime(), //.toISOString(),
+                    price:      price,
+                    side:      'buy',
+                    type:      'stop',
+                    stopLoss:   0,
+                    takeProfit: takeProfit
+                });
+            }
+        }
     }
 };
 

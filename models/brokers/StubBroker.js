@@ -18,20 +18,21 @@ function StubBroker () {
 StubBroker.prototype = new Broker();
 StubBroker.prototype.constructor = StubBroker;
 
+var netGain = 0;
+
 StubBroker.prototype.tick = function (quote) {
     var order;
     var i = this.orders.open.length;
 
     while (i--) {
         order = this.orders.open[i];
-        if (quote.ask < order.price) {
+        if (quote.ask >= order.price) {
+            this.orders.open.splice(i, 1);
             this.orders.active.push(order);
+            order.boughtAt = quote.ask;
+        } else if (quote.time > order.expiry) {
             this.orders.open.splice(i, 1);
-            this.balance = this.balance + order.units / order.price;
-            this.balance = this.balance - order.units / quote.ask;
-        } else if (order.expiry <= quote.time) {
-            this.orders.open.splice(i, 1);
-            this.balance = this.balance + order.units / order.price;
+            this.balance = this.balance + order.units;
         }
     }
 
@@ -40,13 +41,15 @@ StubBroker.prototype.tick = function (quote) {
         order = this.orders.active[i];
         if (quote.bid <= order.takeProfit) {
             this.orders.active.splice(i, 1);
-            this.balance = this.balance + order.units / quote.bid;
+            netGain = netGain + (order.units * order.boughtAt / quote.bid - order.units);
+            console.log(netGain, (quote.time - order.time) / 1000);
+            this.balance = this.balance + order.units * order.boughtAt / quote.bid;
         }
     }
 };
 
 StubBroker.prototype.order = function (order) {
-    this.balance = this.balance - order.units / order.price;
+    this.balance = this.balance - order.units;
     this.numOrders = this.numOrders + 1;
     this.orders.open.push(order);
 };
