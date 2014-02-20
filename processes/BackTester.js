@@ -1,18 +1,14 @@
-var PubSub = require('../PubSub.js');
+var Eventable = require('../Eventable.js');
 
 function BackTester () {
-    PubSub.call(this);
+    Eventable.call(this);
 }
-BackTester.prototype = new PubSub();
+BackTester.prototype = new Eventable();
 BackTester.prototype.constructor = BackTester;
 
-BackTester.prototype.start = function () {
-	console.log('BackTester subscribing');
-    this.subscribe('WebServer:backTestRequest', this.onBackTestRequest);
-};
 
-BackTester.prototype.onBackTestRequest = function () {
-	console.log('onBackTestRequest');
+BackTester.prototype.start = function () {
+
 };
 
 
