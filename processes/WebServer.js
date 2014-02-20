@@ -1,4 +1,4 @@
-var Eventable = require('../lib/Eventable.js');
+var Eventable = require('../lib/Eventable');
 
 
 function WebServer () {
