@@ -1,14 +1,14 @@
 var Eventable = require('../lib/Eventable');
+var StrategyBase = require('../strategies/StrategyBase');
 var HighLowStrategy = require('../strategies/HighLowStrategy');
-var Q = require('Q');
 
 
 function AutomatedTrader () {
     Eventable.call(this);
 
-    this.strategyCollection = new StrategyCollection([
+    this.strategies = [
         new HighLowStrategy()
-    ]);
+    ];
 
 }
 AutomatedTrader.prototype = new Eventable();
@@ -16,8 +16,9 @@ AutomatedTrader.prototype.constructor = AutomatedTrader;
 
 
 AutomatedTrader.prototype.start = function () {
-    this.instrumentCollection.applyStrategies(this.strategyCollection);
-    this.instrumentCollection.subscribe();
+    this.strategies.forEach(function (strategy) {
+        strategy.start();
+    }, this);
     return this;
 };
 
@@ -27,16 +28,21 @@ AutomatedTrader.prototype.start = function () {
  * @description  Test the AutomatedTrader using historical data
  * @param  {Number}     start   In milliseconds. Gather data from this point
  * @param  {Number}     end     In milliseconds. Gather data to this point
- * @return {Q.Promise}  A promise that gets resolved when the back testing is complete
+ * @return {AutomatedTrader}
  */
 AutomatedTrader.prototype.backTest = function (start, end) {
-    var tickCollection;
-    this.instrumentCollection.applyStrategies(this.strategyCollection);
-
-    tickCollection = this.instrumentCollection.getHistory();
-    tickCollection.forEach(function (tick) {
-        this.instrumentCollection._onTick(tick);
+    this.strategies.forEach(function (strategy) {
+        strategy.on(StrategyBase.EVENT.SIGNAL, this._onBackTestSignal);
+        strategy.backTest(start, end);
     }, this);
+    return this;
+};
+
+
+AutomatedTrader.prototype._onBackTestSignal = function (e) {
+    // TODO: Figure out how to give Strategies access to current balance
+    // TODO: Figure out how to give Strategies access to open orders
+    // TODO: Figure out how to use stub broker when back testing and real broker when running
 };
 
 
