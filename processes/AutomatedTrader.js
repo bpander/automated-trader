@@ -6,9 +6,9 @@ var Q = require('Q');
 function AutomatedTrader () {
     Eventable.call(this);
 
-    this.strategies = [
+    this.strategyCollection = new StrategyCollection([
         new HighLowStrategy()
-    ];
+    ]);
 
 }
 AutomatedTrader.prototype = new Eventable();
@@ -16,21 +16,27 @@ AutomatedTrader.prototype.constructor = AutomatedTrader;
 
 
 AutomatedTrader.prototype.start = function () {
-
+    this.instrumentCollection.applyStrategies(this.strategyCollection);
+    this.instrumentCollection.subscribe();
+    return this;
 };
 
 
 /**
  * @method  backTest
  * @description  Test the AutomatedTrader using historical data
- * @param  {String[]}   currencyPairs   An array of currency pairs in the form [ 'EUR/USD', ... ]
- * @param  {Date}       start           Gather data from this point
- * @param  {Date}       end             Gather data to this point
+ * @param  {Number}     start   In milliseconds. Gather data from this point
+ * @param  {Number}     end     In milliseconds. Gather data to this point
  * @return {Q.Promise}  A promise that gets resolved when the back testing is complete
  */
-AutomatedTrader.prototype.backTest = function (currencyPairs, start, end) {
-    var dfd = Q.defer();
-    return dfd.promise;
+AutomatedTrader.prototype.backTest = function (start, end) {
+    var tickCollection;
+    this.instrumentCollection.applyStrategies(this.strategyCollection);
+
+    tickCollection = this.instrumentCollection.getHistory();
+    tickCollection.forEach(function (tick) {
+        this.instrumentCollection._onTick(tick);
+    }, this);
 };
 
 
