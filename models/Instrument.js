@@ -11,6 +11,10 @@ function Instrument (base, counter) {
 
     this.graphs = [];
 
+    this.bid = 0;
+
+    this.ask = 0;
+
     this._onTick = this._onTick.bind(this);
 
 }
@@ -32,6 +36,8 @@ Instrument.prototype.toString = function () {
 
 
 Instrument.prototype._onTick = function (e) {
+    this.bid = e.data.bid;
+    this.ask = e.data.ask;
     this.graphs.forEach(function (graph) {
         graph.addTick(e.data);
     });

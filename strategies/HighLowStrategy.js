@@ -2,6 +2,7 @@ var StrategyBase = require('./StrategyBase');
 var Instrument = require('../models/Instrument');
 var InstrumentCollection = require('../models/InstrumentCollection');
 var Graph = require('../models/Graph');
+var Order = require('../models/Order');
 
 
 function HighLowStrategy () {
@@ -11,6 +12,10 @@ function HighLowStrategy () {
         new Instrument('EUR', 'USD')
     ]);
 
+    this.orders = [];
+
+    this.minimumBalance = 10;
+
     this._onCandleClose = this._onCandleClose.bind(this);
 
 }
@@ -19,8 +24,8 @@ HighLowStrategy.prototype.constructor = HighLowStrategy;
 
 
 HighLowStrategy.SIGNAL = {
-    RSI_MIN: 0.25,
-    RSI_MAX: 0.75
+    RSI_MIN: 25,
+    RSI_MAX: 75
 };
 
 
@@ -37,31 +42,60 @@ HighLowStrategy.prototype.start = function () {
 
 
 HighLowStrategy.prototype._onCandleClose = function (e) {
+    var self = this;
     var graph = e.target;
     var candle = e.data;
+
+    // Get data analytics
     var rsi = graph.getRSI(14);
     var bb_short = graph.getBollingerBand(14, 1);
     var bb_long = graph.getBollingerBand(300, 1);
-    var doSell = (true || rsi > HighLowStrategy.SIGNAL.RSI_MAX) &&
+
+    // Check for orders that need to be closed
+    var order;
+    var price;
+    var doClose;
+    var i = this.orders.length;
+    while (i--) {
+        order = this.orders[i];
+        if (order.options.side === 'sell') {
+            price = graph.instrument.ask;
+            doClose = rsi < 35 && price < order.response.price;
+        } else {
+            price = graph.instrument.bid;
+            doClose = rsi > 65 && price > order.response.price;
+        }
+        if (doClose) {
+            order.close().then(function () {
+                self.orders.splice(self.orders.indexOf(order), 1);
+            });
+        }
+    }
+
+    // Check to see if we should make any more orders
+    if (this.broker.balance <= this.minimumBalance) {
+        return;
+    }
+    var doSell = rsi > HighLowStrategy.SIGNAL.RSI_MAX &&
         candle.closeBid > bb_short.upperBid &&
         candle.closeBid > bb_long.meanBid;
-    var doBuy = (true || rsi < HighLowStrategy.SIGNAL.RSI_MIN) &&
+    var doBuy = rsi < HighLowStrategy.SIGNAL.RSI_MIN &&
         candle.closeAsk < bb_short.lowerAsk &&
         candle.closeAsk < bb_long.meanAsk;
 
-    if (doSell) {
-        this.trigger(StrategyBase.EVENT.SIGNAL, {
-            instrument: graph.instrument.toString(),
-            units: 100,
-            side: 'sell',
+    // Sell or buy
+    var order;
+    var units = 100;
+    if (doSell || doBuy) {
+        price = doSell ? candle.closeBid : candle.closeAsk;
+        order = new Order(this.broker, {
+            instrument: graph.instrument,
+            units: graph.instrument.base === 'USD' ? units : 1 / price * units,
+            side: doSell ? 'sell' : 'buy',
             type: 'market'
         });
-    } else if (doBuy) {
-        this.trigger(StrategyBase.EVENT.SIGNAL, {
-            instrument: graph.instrument.toString(),
-            units: 100,
-            side: 'buy',
-            type: 'market'
+        order.send().then(function () {
+            self.orders.push(order);
         });
     }
 };

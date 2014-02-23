@@ -85,7 +85,20 @@ CandleStickGraph.prototype.addTick = function (tick) {
 
 
 CandleStickGraph.prototype.getRSI = function (period) {
-    var RS = 1;
+    var candles = this.candles.slice(0, period);
+    var gain = 0;
+    var loss = 0;
+    candles.forEach(function (candle) {
+        var delta = candle.closeBid - candle.openBid;
+        if (delta > 0) {
+            gain = gain + delta;
+        } else {
+            loss = loss - delta;
+        }
+    });
+    var averageGain = gain / candles.length;
+    var averageLoss = loss / candles.length;
+    var RS = averageGain / averageLoss;
     return 100 - 100 / (1 + RS);
 };
 
