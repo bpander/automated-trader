@@ -33,10 +33,10 @@ StrategyBase.prototype.backTest = function (start, end) {
         var l = ticks.length;
         var foo = function () {
             var dfd = Q.defer();
-            dfd.promise.then(foo);
             self.instrumentCollection._onTick(ticks[i]);
             i++;
             if (i !== l) {
+                dfd.promise.then(foo);
                 dfd.resolve();
             } else {
                 done();
@@ -44,7 +44,8 @@ StrategyBase.prototype.backTest = function (start, end) {
         };
         var done = function () {
             var outstanding = self.orders.reduce(function (previous, current) {
-                return previous + current.options.units * current.response.price;
+                var originalInput = current.options.instrument.base === 'USD' ? current.options.units : current.options.units * current.response.price;
+                return previous + originalInput;
             }, 0);
             console.log('balance:', self.broker.balance);
             console.log('outstanding orders:', self.orders.length, '@', outstanding);

@@ -26,7 +26,7 @@ InstrumentCollection.prototype.subscribe = function () {
 
 InstrumentCollection.prototype.getHistory = function (start, end) {
     var dfd = Q.defer();
-    csv().from.path('./history/DAT_ASCII_EURUSD_T_201401.csv').to.array(function (data, count) {
+    csv().from.path('./history/DAT_ASCII_USDJPY_T_201401.csv').to.array(function (data, count) {
         var ticks = data.map(function (row) {
             var timeString = row[0];
             var date = new Date();
@@ -38,7 +38,7 @@ InstrumentCollection.prototype.getHistory = function (start, end) {
             var second = timeString.slice(13, 15);
             var millisecond = timeString.slice(15);
             return {
-                instrument: 'EUR/USD',
+                instrument: 'USD/JPY',
                 timestamp: Date.UTC(year, month, day, hour, minute, second, millisecond),
                 bid: +row[1],
                 ask: +row[2]

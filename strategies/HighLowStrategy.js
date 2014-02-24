@@ -9,12 +9,12 @@ function HighLowStrategy () {
     StrategyBase.call(this);
 
     this.instrumentCollection = new InstrumentCollection([
-        new Instrument('EUR', 'USD')
+        new Instrument('USD', 'JPY')
     ]);
 
     this.orders = [];
 
-    this.minimumBalance = 10;
+    this.minimumBalance = 99;
 
     this._onCandleClose = this._onCandleClose.bind(this);
 
@@ -60,10 +60,10 @@ HighLowStrategy.prototype._onCandleClose = function (e) {
         order = this.orders[i];
         if (order.options.side === 'sell') {
             price = graph.instrument.ask;
-            doClose = rsi < 35 && price < order.response.price;
+            doClose = rsi < 25 && price < order.response.price;
         } else {
             price = graph.instrument.bid;
-            doClose = rsi > 65 && price > order.response.price;
+            doClose = rsi > 75 && price > order.response.price;
         }
         if (doClose) {
             order.close().then(function () {
@@ -84,7 +84,6 @@ HighLowStrategy.prototype._onCandleClose = function (e) {
         candle.closeAsk < bb_long.meanAsk;
 
     // Sell or buy
-    var order;
     var units = 100;
     if (doSell || doBuy) {
         price = doSell ? candle.closeBid : candle.closeAsk;

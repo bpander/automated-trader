@@ -9,8 +9,6 @@ function Broker () {
 
 }
 
-var TODO = 1;
-
 
 Broker.prototype.send = function (order) {
     var dfd = Q.defer();
@@ -30,7 +28,14 @@ Broker.prototype.send = function (order) {
         tradeReduced: {}
     };
     order.response = response;
-    this.balance = this.balance - (order.options.instrument.base === 'USD' ? 1 / response.price : response.price) * response.tradeOpened.units;
+    var delta;
+    if (order.options.instrument.base === 'USD') {
+        delta = response.tradeOpened.units;
+    } else {
+        delta = response.price * response.tradeOpened.units;
+    }
+    this.balance = this.balance - delta;
+    console.log('-' + delta, this.balance);
     dfd.resolve();
     return dfd.promise;
 };
@@ -49,13 +54,14 @@ Broker.prototype.close = function (order) {
     };
     var delta = 0;
     if (order.options.instrument.base === 'USD') {
-        delta = Math.abs(1 / order.response.price - 1 / response.price) * order.options.units;
-        this.balance = this.balance + delta + order.options.units;
+        delta = Math.abs(order.response.price * response.units - response.price * response.units) / response.price;
+        this.balance = this.balance + delta + response.units;
     } else {
-        delta = Math.abs(order.response.price - response.price) * order.options.units;
-        this.balance = this.balance + delta + order.options.units * order.response.price;
+        delta = Math.abs(order.response.price * response.units - response.price * response.units);
+        this.balance = this.balance + delta + response.units * order.response.price;
     }
     net = net + delta;
+    console.log('+' + delta, net, this.balance);
     dfd.resolve();
     return dfd.promise;
 };
