@@ -27,7 +27,10 @@ StrategyBase.prototype.start = function () {
 
 StrategyBase.prototype.backTest = function (start, end) {
     var self = this;
-    this.start();
+    this.start().then(function () {
+        console.log('all graphs got');
+    });
+    return;
     return this.instrumentCollection.getHistory(start, end).then(function (ticks) {
         var i = 0;
         var l = ticks.length;

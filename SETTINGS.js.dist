@@ -1,0 +1,9 @@
+var SETTINGS = {
+
+    OANDA_API_TOKEN: '91ffa56f69262274a042591cbe4c9476-526746ceaec7865a4faf18fc3fc9b0bb',
+
+    IS_TESTING: true
+
+};
+
+module.exports = SETTINGS;

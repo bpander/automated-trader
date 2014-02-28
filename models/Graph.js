@@ -1,5 +1,7 @@
 var Eventable = require('../lib/Eventable');
 var Candle = require('./Candle');
+var OandaApi = require('../lib/OandaApi');
+var querystring = require('querystring');
 
 
 var Graph = {};
@@ -7,6 +9,10 @@ var Graph = {};
 
 Graph.TYPE = {
     CANDLE_STICK: CandleStickGraph
+};
+
+Graph.GRANULARITY = {
+    M1: 'M1'
 };
 
 
@@ -81,6 +87,32 @@ CandleStickGraph.prototype.addTick = function (tick) {
         this.trigger(CandleStickGraph.EVENT.CANDLE_CLOSE, lastCandle);
     }
     return this;
+};
+
+
+CandleStickGraph.prototype.getHistory = function (start, end) {
+    var self = this;
+    var parameters = {
+        instrument: this.instrument.toString(),
+        count: this.maxLength,
+        granularity: this.granularity
+    };
+    if (start) {
+        parameters.start = start;
+    }
+    if (end) {
+        parameters.end = end;
+    }
+    return OandaApi.request({
+        path: '/v1/history?' + querystring.stringify(parameters),
+        method: 'GET'
+    }).then(function (res) {
+        self.candles = [];
+        res.candles.forEach(function (candle) {
+            self.candles.push(new Candle().fromJSON(candle));
+        });
+        console.log('graph got');
+    });
 };
 
 

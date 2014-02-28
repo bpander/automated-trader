@@ -21,4 +21,18 @@ function Candle () {
 }
 
 
+Candle.prototype.fromJSON = function (json) {
+    this.timestamp = new Date(json.time);
+    this.openBid = json.openBid;
+    this.openAsk = json.openAsk;
+    this.closeBid = json.closeBid;
+    this.closeAsk = json.closeAsk;
+    this.highBid = json.highBid;
+    this.highAsk = json.highAsk;
+    this.lowBid = json.lowBid;
+    this.lowAsk = json.lowAsk;
+    return this;
+}
+
+
 module.exports = Candle;

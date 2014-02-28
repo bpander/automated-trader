@@ -3,6 +3,7 @@ var Instrument = require('../models/Instrument');
 var InstrumentCollection = require('../models/InstrumentCollection');
 var Graph = require('../models/Graph');
 var Order = require('../models/Order');
+var Q = require('Q');
 
 
 function HighLowStrategy () {
@@ -32,12 +33,13 @@ HighLowStrategy.SIGNAL = {
 HighLowStrategy.prototype.start = function () {
 
     // Tell the instruments to make 1 minute candles
-    this.instrumentCollection.models.forEach(function (instrument) {
-        var graph = instrument.createGraph(1000 * 60, Graph.TYPE.CANDLE_STICK);
+    var promises = this.instrumentCollection.models.map(function (instrument) {
+        var graph = instrument.createGraph(Graph.GRANULARITY.M1, Graph.TYPE.CANDLE_STICK);
         graph.on(Graph.TYPE.CANDLE_STICK.EVENT.CANDLE_CLOSE, this._onCandleClose);
+        return graph.getHistory(null, new Date('31 Dec 2013 23:59:59 EST').toISOString());
     }, this);
 
-    return this;
+    return Q.all(promises);
 };
 
 
