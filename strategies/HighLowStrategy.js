@@ -15,6 +15,8 @@ function HighLowStrategy () {
 
     this.orders = [];
 
+    this.graphs = {};
+
     this.minimumBalance = 99;
 
     this._onCandleClose = this._onCandleClose.bind(this);
@@ -32,11 +34,24 @@ HighLowStrategy.SIGNAL = {
 
 HighLowStrategy.prototype.start = function () {
 
-    // Tell the instruments to make 1 minute candles
+    // Tell each instrument to make day and minute candle graphs
     var promises = this.instrumentCollection.models.map(function (instrument) {
-        var graph = instrument.createGraph(Graph.GRANULARITY.M1, Graph.TYPE.CANDLE_STICK);
-        graph.on(Graph.TYPE.CANDLE_STICK.EVENT.CANDLE_CLOSE, this._onCandleClose);
-        return graph.getHistory(null, new Date('31 Dec 2013 23:59:59 EST').toISOString());
+        // Create short- and long-term graph instances
+        var graph_short = instrument.createGraph(Graph.GRANULARITY.M1, Graph.TYPE.CANDLE_STICK);
+        var graph_long = instrument.createGraph(Graph.GRANULARITY.D, Graph.TYPE.CANDLE_STICK);
+        graph_short.on(Graph.TYPE.CANDLE_STICK.EVENT.CANDLE_CLOSE, this._onCandleClose);
+
+        // Save the created graphs to the Strategy instance
+        this.graphs[Graph.GRANULARITY.M1] = this.graphs[Graph.GRANULARITY.M1] || {};
+        this.graphs[Graph.GRANULARITY.M1][instrument.toString()] = graph_short;
+        this.graphs[Graph.GRANULARITY.D] = this.graphs[Graph.GRANULARITY.D] || {};
+        this.graphs[Graph.GRANULARITY.D][instrument.toString()] = graph_long;
+
+        // Resolve when graph history is got
+        return Q.all([
+            graph_short.getHistory(null, new Date('31 Dec 2013 23:59:59 EST').toISOString()),
+            graph_long.getHistory(null, new Date('31 Dec 2013 23:59:59 EST').toISOString())
+        ]);
     }, this);
 
     return Q.all(promises);
@@ -52,6 +67,7 @@ HighLowStrategy.prototype._onCandleClose = function (e) {
     var rsi = graph.getRSI(14);
     var bb_short = graph.getBollingerBand(14, 1);
     var bb_long = graph.getBollingerBand(300, 1);
+    var bb_longer = this.graphs[Graph.GRANULARITY.D][graph.instrument.toString()].getBollingerBand(300, 1);
 
     // Check for orders that need to be closed
     var order;
@@ -79,9 +95,11 @@ HighLowStrategy.prototype._onCandleClose = function (e) {
         return;
     }
     var doSell = rsi > HighLowStrategy.SIGNAL.RSI_MAX &&
+        candle.closeBid > bb_longer.lowerAsk &&
         candle.closeBid > bb_short.upperBid &&
         candle.closeBid > bb_long.meanBid;
     var doBuy = rsi < HighLowStrategy.SIGNAL.RSI_MIN &&
+        candle.closeAsk < bb_longer.upperBid &&
         candle.closeAsk < bb_short.lowerAsk &&
         candle.closeAsk < bb_long.meanAsk;
 

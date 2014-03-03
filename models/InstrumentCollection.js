@@ -31,7 +31,7 @@ InstrumentCollection.prototype.getHistory = function (start, end) {
             var timeString = row[0];
             var date = new Date();
             var year = timeString.slice(0, 4);
-            var month = timeString.slice(4, 6) - 1;
+            var month = timeString.slice(4, 6);
             var day = timeString.slice(6, 8);
             var hour = timeString.slice(9, 11);
             var minute = timeString.slice(11, 13);
@@ -39,7 +39,7 @@ InstrumentCollection.prototype.getHistory = function (start, end) {
             var millisecond = timeString.slice(15);
             return {
                 instrument: 'USD/JPY',
-                timestamp: Date.UTC(year, month, day, hour, minute, second, millisecond),
+                timestamp: new Date([month, day, year].join('/') + ' ' + hour + ':' + minute + ':' + second + '.' + millisecond + ' EST').getTime(),
                 bid: +row[1],
                 ask: +row[2]
             };

@@ -12,7 +12,13 @@ Graph.TYPE = {
 };
 
 Graph.GRANULARITY = {
-    M1: 'M1'
+    M1: 'M1',
+    D: 'D'
+};
+
+Graph.INTERVAL = {
+    M1: 1000 * 60,
+    D: 1000 * 60 * 60 * 24
 };
 
 
@@ -62,7 +68,7 @@ CandleStickGraph.prototype.addTick = function (tick) {
     this.currentCandle.lowBid = Math.min(this.currentCandle.lowBid, tick.bid);
     this.currentCandle.lowAsk = Math.min(this.currentCandle.lowAsk, tick.ask);
 
-    if (tick.timestamp > this.currentCandle.timestamp + this.granularity) {
+    if (tick.timestamp > this.currentCandle.timestamp + Graph.INTERVAL[this.granularity]) {
         // Close out the current candle
         lastCandle = this.currentCandle;
         lastCandle.closeBid = tick.bid;
@@ -109,9 +115,8 @@ CandleStickGraph.prototype.getHistory = function (start, end) {
     }).then(function (res) {
         self.candles = [];
         res.candles.forEach(function (candle) {
-            self.candles.push(new Candle().fromJSON(candle));
+            self.candles.unshift(new Candle().fromJSON(candle));
         });
-        console.log('graph got');
     });
 };
 

@@ -22,7 +22,7 @@ function Candle () {
 
 
 Candle.prototype.fromJSON = function (json) {
-    this.timestamp = new Date(json.time);
+    this.timestamp = new Date(json.time).getTime();
     this.openBid = json.openBid;
     this.openAsk = json.openAsk;
     this.closeBid = json.closeBid;
