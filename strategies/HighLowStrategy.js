@@ -17,8 +17,6 @@ function HighLowStrategy () {
 
     this.graphs = {};
 
-    this.minimumBalance = 99;
-
     this._onCandleClose = this._onCandleClose.bind(this);
 
 }
@@ -91,7 +89,8 @@ HighLowStrategy.prototype._onCandleClose = function (e) {
     }
 
     // Check to see if we should make any more orders
-    if (this.broker.balance <= this.minimumBalance) {
+    var units = 100;
+    if (this.broker.balance < units) {
         return;
     }
     var doSell = rsi > HighLowStrategy.SIGNAL.RSI_MAX &&
@@ -104,7 +103,6 @@ HighLowStrategy.prototype._onCandleClose = function (e) {
         candle.closeAsk < bb_long.meanAsk;
 
     // Sell or buy
-    var units = 100;
     if (doSell || doBuy) {
         price = doSell ? candle.closeBid : candle.closeAsk;
         order = new Order(this.broker, {
