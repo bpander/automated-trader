@@ -11,7 +11,6 @@ function Broker () {
 
 
 Broker.prototype.send = function (order) {
-    var dfd = Q.defer();
     var response = {
         instrument: order.options.instrument.toString(),
         time: new Date().toISOString(),
@@ -36,14 +35,11 @@ Broker.prototype.send = function (order) {
     }
     this.balance = this.balance - delta;
     console.log('-' + delta, this.balance, order.options.side, response.price);
-    dfd.resolve();
-    return dfd.promise;
 };
 
 var net = 0;
 
 Broker.prototype.close = function (order) {
-    var dfd = Q.defer();
     var response = {
         id: 54332,
         instrument: order.options.instrument.toString(),
@@ -54,16 +50,14 @@ Broker.prototype.close = function (order) {
     };
     var delta = 0;
     if (order.options.instrument.base === 'USD') {
-        delta = Math.abs(order.response.price * response.units - response.price * response.units) / response.price;
+        delta = Math.abs(order.response.price - response.price) * response.units / response.price;
         this.balance = this.balance + delta + response.units;
     } else {
-        delta = Math.abs(order.response.price * response.units - response.price * response.units);
+        delta = Math.abs(order.response.price - response.price) * response.units;
         this.balance = this.balance + delta + response.units * order.response.price;
     }
     net = net + delta;
     console.log('+' + delta, net, this.balance, order.options.side, response.price);
-    dfd.resolve();
-    return dfd.promise;
 };
 
 

@@ -57,7 +57,6 @@ HighLowStrategy.prototype.start = function () {
 
 
 HighLowStrategy.prototype._onCandleClose = function (e) {
-    var self = this;
     var graph = e.target;
     var candle = e.data;
 
@@ -82,16 +81,18 @@ HighLowStrategy.prototype._onCandleClose = function (e) {
             doClose = rsi > 75 && price > order.response.price;
         }
         if (doClose) {
-            order.close().then(function () {
-                self.orders.splice(self.orders.indexOf(order), 1);
-            });
+            order.close();
+            this.orders.splice(this.orders.indexOf(order), 1);
         }
     }
 
     // Check to see if we should make any more orders
-    var units = 100;
+    var units = Math.max(100, this.broker.balance * 0.1);
     if (this.broker.balance < units) {
-        return;
+        units = this.broker.balance;
+        if (units < 20) {
+            return;
+        }
     }
     var doSell = rsi > HighLowStrategy.SIGNAL.RSI_MAX &&
         candle.closeBid > bb_longer.lowerAsk &&
@@ -111,9 +112,8 @@ HighLowStrategy.prototype._onCandleClose = function (e) {
             side: doSell ? 'sell' : 'buy',
             type: 'market'
         });
-        order.send().then(function () {
-            self.orders.push(order);
-        });
+        order.send();
+        this.orders.push(order);
     }
 };
 
