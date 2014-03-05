@@ -35,7 +35,24 @@ InstrumentCollection.prototype.getHistory = function (start, end) {
         password: SETTINGS.MYSQL_PASSWORD,
         database: SETTINGS.MYSQL_DATABASE
     });
-    connection.query('SELECT * FROM ticks WHERE timestamp > ' + start.getTime() + ' AND timestamp < ' + end.getTime() + ' ORDER BY timestamp ASC', function (error, data) {
+    var statement = 'SELECT * FROM ticks WHERE (';
+    var lastIndex = this.models.length - 1;
+    this.models.forEach(function (model, i) {
+        statement = statement + 'instrument = "' + model.base + '/' + model.counter + '"';
+        if (i !== lastIndex) {
+            statement = statement + ' OR ';
+        } else {
+            statement = statement + ')';
+        }
+    });
+    if (start) {
+        statement = statement + ' AND timestamp > ' + start.getTime();
+    }
+    if (end) {
+        statement = statement + ' AND timestamp < ' + end.getTime();
+    }
+    statement = statement + ' ORDER BY timestamp ASC';
+    connection.query(statement, function (error, data) {
         if (error) {
             console.log('Error:', error);
             return;

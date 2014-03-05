@@ -11,8 +11,7 @@ function HighLowStrategy () {
 
     this.instrumentCollection = new InstrumentCollection([
         new Instrument('EUR', 'USD'),
-        new Instrument('USD', 'JPY'),
-        new Instrument('USD', 'CAD')
+        new Instrument('USD', 'JPY')
     ]);
 
     this.orders = [];
