@@ -48,27 +48,50 @@ TickImporter.prototype.start = function () {
             instrument = instrument.slice(0, 3) + '/' + instrument.slice(3);
             csv().from.path(CONFIG.RAW_DATA_FOLDER + current).to.array(function (data) {
                 console.log('Got', current);
-                self.import(instrument, data);
-                dfd.resolve();
+                self.import(instrument, data).then(dfd.resolve, dfd.reject);
             });
             return dfd.promise;
         });
-    }, Q()).then(function () {
-        self.connection.end();
-    });
+    }, Q()).then(self.connection.end.bind(self.connection)).fail(self.connection.end.bind(self.connection));
 };
 
 
 TickImporter.prototype.import = function (instrument, data) {
-    var row = data[0];
-    var values = [];
-    values[0] = '"' + instrument + '"';
-    values[1] = _formatDate(row[0]);
-    values[2] = row[1];
-    values[3] = row[2];
-    this.connection.query('INSERT INTO ticks VALUES (' + values.join(', ') + ')', function (error, response) {
-        console.log('response', arguments);
-    });
+    var self = this;
+    var dfd = Q.defer();
+    var i = 0;
+    var l = data.length;
+    var insertRow = function () {
+        var statement = '';
+        var row = data[i];
+        var values = [];
+        values[0] = '"' + instrument + '"';
+        values[1] = _formatDate(row[0]);
+        values[2] = row[1];
+        values[3] = row[2];
+        self.connection.query('INSERT INTO ticks VALUES (' + values.join(', ') + ')', function (error, response) {
+            if (error) {
+                console.error('ERROR: ', error);
+                dfd.reject();
+                return;
+            }
+            i++;
+            if (i !== l) {
+                insertRow();
+            } else {
+                clearInterval(intervalId);
+                dfd.resolve();
+                console.log('Import complete');
+            }
+        });
+    };
+    var logStatus = function () {
+        console.log('Completed', i / l, '%');
+    };
+    var intervalId = setInterval(logStatus, 1000);
+    console.log('Starting import of', l, 'ticks');
+    insertRow();
+    return dfd.promise;
 };
 
 
