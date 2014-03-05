@@ -27,8 +27,8 @@ AutomatedTrader.prototype.start = function () {
 /**
  * @method  backTest
  * @description  Test the AutomatedTrader using historical data
- * @param  {Number}     start   In milliseconds. Gather data from this point
- * @param  {Number}     end     In milliseconds. Gather data to this point
+ * @param  {Date}     start   Back-test from this point
+ * @param  {Date}     end     Back-test to this point
  * @return {AutomatedTrader}
  */
 AutomatedTrader.prototype.backTest = function (start, end) {

@@ -27,7 +27,7 @@ StrategyBase.prototype.start = function () {
 
 StrategyBase.prototype.backTest = function (start, end) {
     var self = this;
-    return this.start()
+    return this.start(start)
         .then(function () {
             return self.instrumentCollection.getHistory(start, end);
         })

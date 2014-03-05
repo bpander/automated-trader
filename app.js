@@ -15,4 +15,4 @@ observer.observe([ webServer, automatedTrader ]);
 
 // 3. Start the processes
 webServer.start();
-automatedTrader.backTest();
+automatedTrader.backTest(new Date('10 Jan 2014'), new Date('25 Jan 2014'));

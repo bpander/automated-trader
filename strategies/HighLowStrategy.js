@@ -32,7 +32,9 @@ HighLowStrategy.SIGNAL = {
 };
 
 
-HighLowStrategy.prototype.start = function () {
+HighLowStrategy.prototype.start = function (startDate) {
+    var startDate = startDate instanceof Date ? startDate : new Date();
+    console.log('Strategy started at', startDate);
 
     // Tell each instrument to make day and minute candle graphs
     var promises = this.instrumentCollection.models.map(function (instrument) {
@@ -49,8 +51,8 @@ HighLowStrategy.prototype.start = function () {
 
         // Resolve when graph history is got
         return Q.all([
-            graph_short.getHistory(null, new Date('15 Jan 2014').toISOString()),
-            graph_long.getHistory(null, new Date('15 Jan 2014').toISOString())
+            graph_short.getHistory(null, startDate),
+            graph_long.getHistory(null, startDate)
         ]);
     }, this);
 

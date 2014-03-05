@@ -105,10 +105,10 @@ CandleStickGraph.prototype.getHistory = function (start, end) {
         granularity: this.granularity
     };
     if (start) {
-        parameters.start = start;
+        parameters.start = start.toISOString();
     }
     if (end) {
-        parameters.end = end;
+        parameters.end = end.toISOString();
     }
     return OandaApi.request({
         path: '/v1/history?' + querystring.stringify(parameters),

@@ -35,7 +35,7 @@ InstrumentCollection.prototype.getHistory = function (start, end) {
         password: SETTINGS.MYSQL_PASSWORD,
         database: SETTINGS.MYSQL_DATABASE
     });
-    connection.query('SELECT * FROM ticks WHERE timestamp > ' + new Date('15 Jan 2014').getTime() + ' ORDER BY timestamp ASC', function (error, data) {
+    connection.query('SELECT * FROM ticks WHERE timestamp > ' + start.getTime() + ' AND timestamp < ' + end.getTime() + ' ORDER BY timestamp ASC', function (error, data) {
         if (error) {
             console.log('Error:', error);
             return;
