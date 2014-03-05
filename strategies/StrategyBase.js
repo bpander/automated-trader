@@ -46,14 +46,16 @@ StrategyBase.prototype.backTest = function (start, end) {
                 }
             };
             var done = function () {
+                console.log('Processing ticks completed');
                 var outstanding = self.orders.reduce(function (previous, current) {
                     var originalInput = current.options.instrument.base === 'USD' ? current.options.units : current.options.units * current.response.price;
                     return previous + originalInput;
                 }, 0);
-                console.log('balance:', self.broker.balance);
-                console.log('outstanding orders:', self.orders.length, '@', outstanding);
-                console.log('net:', self.broker.balance + outstanding - self.broker.seedMoney);
+                console.log('Balance:', self.broker.balance);
+                console.log('Outstanding Orders:', self.orders.length, '@', outstanding);
+                console.log('P/L:', self.broker.balance + outstanding - self.broker.seedMoney);
             };
+            console.log('Processing ticks');
             processTick();
         })
     ;

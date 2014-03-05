@@ -10,7 +10,9 @@ function HighLowStrategy () {
     StrategyBase.call(this);
 
     this.instrumentCollection = new InstrumentCollection([
-        new Instrument('USD', 'JPY')
+        new Instrument('EUR', 'USD'),
+        new Instrument('USD', 'JPY'),
+        new Instrument('USD', 'CAD')
     ]);
 
     this.orders = [];
@@ -47,8 +49,8 @@ HighLowStrategy.prototype.start = function () {
 
         // Resolve when graph history is got
         return Q.all([
-            graph_short.getHistory(null, new Date('31 Dec 2013 23:59:59 EST').toISOString()),
-            graph_long.getHistory(null, new Date('31 Dec 2013 23:59:59 EST').toISOString())
+            graph_short.getHistory(null, new Date('15 Jan 2014').toISOString()),
+            graph_long.getHistory(null, new Date('15 Jan 2014').toISOString())
         ]);
     }, this);
 

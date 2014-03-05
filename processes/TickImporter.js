@@ -42,6 +42,10 @@ TickImporter.prototype.start = function () {
 
     return fs.readdirSync(CONFIG.RAW_DATA_FOLDER).reduce(function (previous, current) {
         return previous.then(function () {
+            var fileExt = current.split('.').pop().toLowerCase();
+            if (fileExt !== 'csv') {
+                return;
+            }
             var instrument = current.split('_')[2];
             var dfd = Q.defer();
             console.log('Fetching', current);
@@ -86,7 +90,7 @@ TickImporter.prototype.import = function (instrument, data) {
         });
     };
     var logStatus = function () {
-        console.log('Completed', i / l, '%');
+        console.log('Completed', i / l * 100 + '%');
     };
     var intervalId = setInterval(logStatus, 1000);
     console.log('Starting import of', l, 'ticks');

@@ -97,6 +97,7 @@ CandleStickGraph.prototype.addTick = function (tick) {
 
 
 CandleStickGraph.prototype.getHistory = function (start, end) {
+    console.log('Getting', this.instrument.toString(), this.granularity, 'graph');
     var self = this;
     var parameters = {
         instrument: this.instrument.toString(),
@@ -117,6 +118,7 @@ CandleStickGraph.prototype.getHistory = function (start, end) {
         res.candles.forEach(function (candle) {
             self.candles.unshift(new Candle().fromJSON(candle));
         });
+        console.log('Got', self.instrument.toString(), self.granularity, 'graph history');
     });
 };
 

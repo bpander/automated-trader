@@ -1,5 +1,6 @@
-var csv = require('csv');
 var Q = require('Q');
+var mysql = require('mysql');
+var SETTINGS = require('../SETTINGS');
 
 
 function InstrumentCollection (models) {
@@ -25,26 +26,23 @@ InstrumentCollection.prototype.subscribe = function () {
 
 
 InstrumentCollection.prototype.getHistory = function (start, end) {
+    console.log('Getting instrument history');
     var dfd = Q.defer();
-    csv().from.path('./history/DAT_ASCII_USDJPY_T_201401.csv').to.array(function (data, count) {
-        var ticks = data.map(function (row) {
-            var timeString = row[0];
-            var date = new Date();
-            var year = timeString.slice(0, 4);
-            var month = timeString.slice(4, 6);
-            var day = timeString.slice(6, 8);
-            var hour = timeString.slice(9, 11);
-            var minute = timeString.slice(11, 13);
-            var second = timeString.slice(13, 15);
-            var millisecond = timeString.slice(15);
-            return {
-                instrument: 'USD/JPY',
-                timestamp: new Date([month, day, year].join('/') + ' ' + hour + ':' + minute + ':' + second + '.' + millisecond + ' EST').getTime(),
-                bid: +row[1],
-                ask: +row[2]
-            };
-        });
-        dfd.resolve(ticks);
+    var connection = mysql.createConnection({
+        host: SETTINGS.MYSQL_HOST,
+        port: SETTINGS.MYSQL_PORT,
+        user: SETTINGS.MYSQL_USER,
+        password: SETTINGS.MYSQL_PASSWORD,
+        database: SETTINGS.MYSQL_DATABASE
+    });
+    connection.query('SELECT * FROM ticks WHERE timestamp > ' + new Date('15 Jan 2014').getTime() + ' ORDER BY timestamp ASC', function (error, data) {
+        if (error) {
+            console.log('Error:', error);
+            return;
+        }
+        console.log('Got instrument history');
+        connection.end();
+        dfd.resolve(data);
     });
     return dfd.promise;
 };
