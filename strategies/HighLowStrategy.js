@@ -11,7 +11,10 @@ function HighLowStrategy () {
 
     this.instrumentCollection = new InstrumentCollection([
         new Instrument('EUR', 'USD'),
-        new Instrument('USD', 'JPY')
+        new Instrument('USD', 'JPY'),
+        new Instrument('USD', 'CAD'),
+        new Instrument('GBP', 'USD'),
+        new Instrument('USD', 'CHF')
     ]);
 
     this.orders = [];
@@ -90,7 +93,7 @@ HighLowStrategy.prototype._onCandleClose = function (e) {
     }
 
     // Check to see if we should make any more orders
-    var units = Math.max(100, this.broker.balance * 0.1);
+    var units = Math.max(200, this.broker.balance * 0.1);
     if (this.broker.balance < units) {
         units = this.broker.balance;
         if (units < 20) {
@@ -113,7 +116,8 @@ HighLowStrategy.prototype._onCandleClose = function (e) {
             instrument: graph.instrument,
             units: graph.instrument.base === 'USD' ? units : 1 / price * units,
             side: doSell ? 'sell' : 'buy',
-            type: 'market'
+            type: 'market',
+            time: new Date(candle.timestamp)
         });
         order.send();
         this.orders.push(order);

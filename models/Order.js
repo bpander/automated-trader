@@ -12,6 +12,8 @@ function Order (broker, options) {
 
     this.options.type = options.type;
 
+    this.options.time = options.time;
+
 }
 
 

@@ -34,7 +34,7 @@ Broker.prototype.send = function (order) {
         delta = response.price * response.tradeOpened.units;
     }
     this.balance = this.balance - delta;
-    console.log('-' + delta, this.balance, order.options.side, response.price);
+    console.log('-' + delta, this.balance, order.options.side, response.price, order.options.time);
 };
 
 var net = 0;

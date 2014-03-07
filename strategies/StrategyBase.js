@@ -53,6 +53,7 @@ StrategyBase.prototype.backTest = function (start, end) {
                 }, 0);
                 console.log('Balance:', self.broker.balance);
                 console.log('Outstanding Orders:', self.orders.length, '@', outstanding);
+                console.log(self.orders);
                 console.log('P/L:', self.broker.balance + outstanding - self.broker.seedMoney);
             };
             console.log('Processing ticks');
