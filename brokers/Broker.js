@@ -1,4 +1,6 @@
 var Q = require('Q');
+var Util = require('../lib/Util');
+var CRON = require('cron');
 
 
 function Broker () {
@@ -13,7 +15,7 @@ function Broker () {
 Broker.prototype.send = function (order) {
     var response = {
         instrument: order.options.instrument.toString(),
-        time: new Date().toISOString(),
+        time: new Date(CRON.now()).toISOString(),
         price: order.options.side === 'sell' ? order.options.instrument.bid : order.options.instrument.ask,
         tradeOpened: {
             id: 175517237,
@@ -34,7 +36,7 @@ Broker.prototype.send = function (order) {
         delta = response.price * response.tradeOpened.units;
     }
     this.balance = this.balance - delta;
-    console.log('-' + delta, this.balance, order.options.side, response.price, order.options.time);
+    Util.log('-' + delta, this.balance, order.options.side, response.price, response.time);
 };
 
 var net = 0;
@@ -57,7 +59,7 @@ Broker.prototype.close = function (order) {
         this.balance = this.balance + delta + response.units * order.response.price;
     }
     net = net + delta;
-    console.log('+' + delta, net, this.balance, order.options.side, response.price);
+    Util.log('+' + delta, net, this.balance, order.options.side, response.price);
 };
 
 

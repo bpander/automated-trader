@@ -1,7 +1,6 @@
 var Eventable = require('../lib/Eventable');
 var StrategyBase = require('../strategies/StrategyBase');
 var HighLowStrategy = require('../strategies/HighLowStrategy');
-var Broker = require('../brokers/Broker');
 
 
 function AutomatedTrader () {
@@ -32,9 +31,7 @@ AutomatedTrader.prototype.start = function () {
  * @return {AutomatedTrader}
  */
 AutomatedTrader.prototype.backTest = function (start, end) {
-    var broker = new Broker();
     this.strategies.forEach(function (strategy) {
-        strategy.setBroker(broker);
         strategy.backTest(start, end);
     }, this);
     return this;

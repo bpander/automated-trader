@@ -1,5 +1,5 @@
 var Eventable = require('../lib/Eventable');
-var Graph = require('./Graph');
+var Order = require('./Order');
 
 
 function Instrument (base, counter) {
@@ -9,25 +9,11 @@ function Instrument (base, counter) {
 
     this.counter = counter;
 
-    this.graphs = [];
-
-    this.bid = 0;
-
-    this.ask = 0;
-
-    this._onTick = this._onTick.bind(this);
+    this.orders = [];
 
 }
 Instrument.prototype = new Eventable();
 Instrument.prototype.constructor = Instrument;
-
-
-Instrument.prototype.createGraph = function (granularity, type) {
-    var graph = Graph.create(this, granularity, type);
-    this.graphs.push(graph);
-    this.on('tick', this._onTick);
-    return graph;
-};
 
 
 Instrument.prototype.toString = function () {
@@ -35,11 +21,26 @@ Instrument.prototype.toString = function () {
 };
 
 
-Instrument.prototype._onTick = function (e) {
-    this.bid = e.data.bid;
-    this.ask = e.data.ask;
-    this.graphs.forEach(function (graph) {
-        graph.addTick(e.data);
+Instrument.prototype.order = function (broker, options) {
+    options.instrument = this.toString();
+    var self = this;
+    var order = new Order(broker, options);
+    this.orders.push(order);
+    return order.send().then(function () {
+        self.orders.push(order);
+    });
+};
+
+
+Instrument.prototype.close = function (order) {
+    var self = this;
+    return order.close().then(function () {
+        var index = self.orders.indexOf(order);
+        if (index === -1) {
+            Util.error('Error: Could not find order', order);
+            return;
+        }
+        self.orders.splice(index, 1);
     });
 };
 

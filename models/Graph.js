@@ -2,134 +2,115 @@ var Eventable = require('../lib/Eventable');
 var Candle = require('./Candle');
 var OandaApi = require('../lib/OandaApi');
 var querystring = require('querystring');
+var Util = require('../lib/Util');
+var CRON = require('cron');
 
 
-var Graph = {};
+CRON.now = Date.now;
 
 
-Graph.TYPE = {
-    CANDLE_STICK: CandleStickGraph
-};
-
-Graph.GRANULARITY = {
-    S5: 'S5',
-    S15: 'S15',
-    S30: 'S30',
-    M1: 'M1',
-    D: 'D'
-};
-
-Graph.INTERVAL = {
-    S5: 1000 * 5,
-    S15: 1000 * 15,
-    S30: 1000 * 30,
-    M1: 1000 * 60,
-    D: 1000 * 60 * 60 * 24
-};
-
-
-Graph.create = function (instrument, granularity, type) {
-    return new type(instrument, granularity);
-};
-
-
-function GraphBase (instrument, granularity) {
+function Graph (instrument, granularity) {
     Eventable.call(this);
 
     this.instrument = instrument;
 
     this.granularity = granularity;
 
-};
-GraphBase.prototype = new Eventable();
-GraphBase.prototype.constructor = GraphBase;
-
-
-GraphBase.prototype.addTick = function (tick) {};
-
-
-function CandleStickGraph (instrument, granularity) {
-    GraphBase.call(this, instrument, granularity);
-
-    this.currentCandle = new Candle();
-
     this.candles = [];
 
     this.maxLength = 500;
 
+    this.cronJob = new CRON.CronJob({
+        cronTime: Graph.CRON_PATTERN[granularity],
+        onTick: this.fetchNewestCandle,
+        context: this
+    });
+
 }
-CandleStickGraph.prototype = new GraphBase();
-CandleStickGraph.prototype.constructor = CandleStickGraph;
+Graph.prototype = new Eventable();
+Graph.prototype.constructor = Graph;
 
 
-CandleStickGraph.EVENT = {
+Graph.GRANULARITY = {
+    S5:     'S5',
+    S15:    'S15',
+    S30:    'S30',
+    M1:     'M1',
+    D:      'D'
+};
+
+Graph.INTERVAL = {
+    S5:     1000 * 5,
+    S15:    1000 * 15,
+    S30:    1000 * 30,
+    M1:     1000 * 60,
+    D:      1000 * 60 * 60 * 24
+};
+
+Graph.CRON_PATTERN = {
+    S5:     '*/5 * * * * *',
+    S15:    '*/15 * * * * *',
+    S30:    '*/30 * * * * *',
+    M1:     '00 * * * * *',
+    D:      '00 00 17 * * *'
+};
+
+Graph.EVENT = {
     CANDLE_CLOSE: 'candleclose'
 };
 
 
-CandleStickGraph.prototype.addTick = function (tick) {
-    var lastCandle;
-    this.currentCandle.highBid = Math.max(this.currentCandle.highBid, tick.bid);
-    this.currentCandle.highAsk = Math.max(this.currentCandle.highAsk, tick.ask);
-    this.currentCandle.lowBid = Math.min(this.currentCandle.lowBid, tick.bid);
-    this.currentCandle.lowAsk = Math.min(this.currentCandle.lowAsk, tick.ask);
-
-    if (tick.timestamp > this.currentCandle.timestamp + Graph.INTERVAL[this.granularity]) {
-        // Close out the current candle
-        lastCandle = this.currentCandle;
-        lastCandle.closeBid = tick.bid;
-        lastCandle.closeAsk = tick.ask;
-
-        // Start a new candle
-        this.currentCandle = new Candle();
-        this.currentCandle.timestamp = tick.timestamp;
-        this.currentCandle.openBid = tick.bid;
-        this.currentCandle.openAsk = tick.ask;
-        this.currentCandle.highBid = tick.bid;
-        this.currentCandle.highAsk = tick.ask;
-        this.currentCandle.lowBid = tick.bid;
-        this.currentCandle.lowAsk = tick.ask;
-
-        if (lastCandle.openBid !== 0) {
-            this.candles.unshift(lastCandle);
-        }
-        if (this.candles.length > this.maxLength) {
-            this.candles.pop();
-        }
-        this.trigger(CandleStickGraph.EVENT.CANDLE_CLOSE, lastCandle);
-    }
-    return this;
-};
-
-
-CandleStickGraph.prototype.getHistory = function (start, end) {
-    console.log('Getting', this.instrument.toString(), this.granularity, 'graph');
+/**
+ * Get back-data and start monitoring for new candles
+ * @return {Q.Promise}  
+ */
+Graph.prototype.start = function () {
     var self = this;
-    var parameters = {
-        instrument: this.instrument.toString(),
-        count: this.maxLength,
-        granularity: this.granularity
-    };
-    if (start) {
-        parameters.start = start.toISOString();
-    }
-    if (end) {
-        parameters.end = end.toISOString();
-    }
-    return OandaApi.request({
-        path: '/v1/history?' + querystring.stringify(parameters),
-        method: 'GET'
-    }).then(function (res) {
+    Util.log('Getting', this.instrument.toString(), this.granularity, 'graph');
+    return this.fetchHistory({ end: new Date(CRON.now()).toISOString() }).then(function (res) {
+        Util.log('Got', self.instrument.toString(), self.granularity, 'graph history');
         self.candles = [];
         res.candles.forEach(function (candle) {
             self.candles.unshift(new Candle().fromJSON(candle));
         });
-        console.log('Got', self.instrument.toString(), self.granularity, 'graph history');
+        self.cronJob.start();
     });
 };
 
 
-CandleStickGraph.prototype.getRSI = function (period) {
+Graph.prototype.stop = function () {
+    this.cronJob.stop();
+    return this;
+};
+
+
+Graph.prototype.fetchNewestCandle = function () {
+    var self = this;
+    this.fetchHistory({
+        count: 1,
+        end: new Date(CRON.now()).toISOString()
+    }).then(function (res) {
+        if (self.candles.length > self.maxLength) {
+            self.candles.pop();
+        }
+        self.candles.unshift(new Candle().fromJSON(res.candles[0]));
+        self.trigger(Graph.EVENT.CANDLE_CLOSE);
+    });
+};
+
+
+Graph.prototype.fetchHistory = function (options) {
+    options = options || {};
+    options.instrument = this.instrument.toString();
+    options.granularity = this.granularity;
+    return OandaApi.request({
+        path: '/v1/history?' + querystring.stringify(options),
+        method: 'GET'
+    });
+};
+
+
+Graph.prototype.getRSI = function (period) {
     var candles = this.candles.slice(0, period);
     var gain = 0;
     var loss = 0;
@@ -148,7 +129,7 @@ CandleStickGraph.prototype.getRSI = function (period) {
 };
 
 
-CandleStickGraph.prototype.getBollingerBand = function (period, standardDeviations) {
+Graph.prototype.getBollingerBand = function (period, standardDeviations) {
     var candles = this.candles.slice(0, period);
     standardDeviations = standardDeviations / 2;
 
