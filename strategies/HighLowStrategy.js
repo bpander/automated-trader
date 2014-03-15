@@ -1,6 +1,7 @@
 var StrategyBase = require('./StrategyBase');
 var Instrument = require('../models/Instrument');
 var Graph = require('../models/Graph');
+var Candle = require('../models/Candle');
 var Q = require('Q');
 var Util = require('../lib/Util');
 var TimeKeeper = require('../lib/TimeKeeper');
@@ -38,9 +39,33 @@ HighLowStrategy.prototype.start = function () {
 
 
 HighLowStrategy.prototype.backTest = function (start, end) {
+    var self = this;
+    var fetchNewestCandle = function () {
+        if (this.candles.length > this.maxLength) {
+            this.candles.pop();
+        }
+        /* TODO: Get future data */
+        // this.candles.unshift(new Candle().fromJSON(this.futureData.candles.shift()));
+        this.trigger(Graph.EVENT.CANDLE_CLOSE);
+    };
     StrategyBase.prototype.backTest.call(this);
     TimeKeeper.setVirtualTime(start.getTime());
     return this.createGraphs().then(function () {
+        // Hijack the cronJob callbacks to they get the previously fetched data instead of calling the Oanda api
+        var granularity;
+        var instrumentString;
+        var graph;
+        for (granularity in self.graphs) {
+            if (self.graphs.hasOwnProperty(granularity)) {
+                for (instrumentString in self.graphs[granularity]) {
+                    if (self.graphs[granularity].hasOwnProperty(instrumentString)) {
+                        graph = self.graphs[granularity][instrumentString];
+                        graph.futureData = [];
+                        graph.cronJob._callbacks = [ fetchNewestCandle ];
+                    }
+                }
+            }
+        }
         TimeKeeper.simulateTime(start, end);
     });
 };
@@ -53,9 +78,8 @@ HighLowStrategy.prototype.backTest = function (start, end) {
  */
 HighLowStrategy.prototype.createGraphs = function () {
     var promises = this.instruments.map(function (instrument) {
-        var instrumentString = instrument.toString();
-        var graph_short = new Graph(instrumentString, Graph.GRANULARITY.S30);
-        var graph_long = new Graph(instrumentString, Graph.GRANULARITY.D);
+        var graph_short = new Graph(instrument, Graph.GRANULARITY.S30);
+        var graph_long = new Graph(instrument, Graph.GRANULARITY.D);
 
         // Listen for the short-term graph candle close event to analyze for open/close calls
         graph_short.on(Graph.EVENT.CANDLE_CLOSE, this._onShortTermCandleClose);
