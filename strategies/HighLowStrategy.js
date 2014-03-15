@@ -3,6 +3,7 @@ var Instrument = require('../models/Instrument');
 var Graph = require('../models/Graph');
 var Q = require('Q');
 var Util = require('../lib/Util');
+var TimeKeeper = require('../lib/TimeKeeper');
 
 
 function HighLowStrategy () {
@@ -38,7 +39,10 @@ HighLowStrategy.prototype.start = function () {
 
 HighLowStrategy.prototype.backTest = function (start, end) {
     StrategyBase.prototype.backTest.call(this);
-    return this.createGraphs();
+    TimeKeeper.setVirtualTime(start.getTime());
+    return this.createGraphs().then(function () {
+        TimeKeeper.simulateTime(start, end);
+    });
 };
 
 

@@ -3,10 +3,7 @@ var Candle = require('./Candle');
 var OandaApi = require('../lib/OandaApi');
 var querystring = require('querystring');
 var Util = require('../lib/Util');
-var CRON = require('cron');
-
-
-CRON.now = Date.now;
+var TimeKeeper = require('../lib/TimeKeeper');
 
 
 function Graph (instrument, granularity) {
@@ -20,10 +17,10 @@ function Graph (instrument, granularity) {
 
     this.maxLength = 500;
 
-    this.cronJob = new CRON.CronJob({
+    this.cronJob = TimeKeeper.createJob({
         cronTime: Graph.CRON_PATTERN[granularity],
-        onTick: this.fetchNewestCandle,
-        context: this
+        onTick:   this.fetchNewestCandle,
+        context:  this
     });
 
 }
@@ -67,7 +64,7 @@ Graph.EVENT = {
 Graph.prototype.start = function () {
     var self = this;
     Util.log('Getting', this.instrument.toString(), this.granularity, 'graph');
-    return this.fetchHistory({ end: new Date(CRON.now()).toISOString() }).then(function (res) {
+    return this.fetchHistory({ end: new Date(TimeKeeper.now()).toISOString() }).then(function (res) {
         Util.log('Got', self.instrument.toString(), self.granularity, 'graph history');
         self.candles = [];
         res.candles.forEach(function (candle) {
@@ -88,7 +85,7 @@ Graph.prototype.fetchNewestCandle = function () {
     var self = this;
     this.fetchHistory({
         count: 1,
-        end: new Date(CRON.now()).toISOString()
+        end: new Date(TimeKeeper.now()).toISOString()
     }).then(function (res) {
         if (self.candles.length > self.maxLength) {
             self.candles.pop();

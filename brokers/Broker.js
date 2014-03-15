@@ -1,6 +1,6 @@
 var Q = require('Q');
 var Util = require('../lib/Util');
-var CRON = require('cron');
+var TimeKeeper = require('../lib/TimeKeeper');
 
 
 function Broker () {
@@ -15,7 +15,7 @@ function Broker () {
 Broker.prototype.send = function (order) {
     var response = {
         instrument: order.options.instrument.toString(),
-        time: new Date(CRON.now()).toISOString(),
+        time: new Date(TimeKeeper.now()).toISOString(),
         price: order.options.side === 'sell' ? order.options.instrument.bid : order.options.instrument.ask,
         tradeOpened: {
             id: 175517237,
