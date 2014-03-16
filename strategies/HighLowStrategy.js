@@ -51,7 +51,7 @@ HighLowStrategy.prototype.backTest = function (start, end) {
     StrategyBase.prototype.backTest.call(this);
     TimeKeeper.setVirtualTime(start.getTime());
     return this.createGraphs().then(function () {
-        // Hijack the cronJob callbacks to they get the previously fetched data instead of calling the Oanda api
+        // Hijack the cronJob callbacks so they get the previously fetched data instead of calling the Oanda api
         var granularity;
         var instrumentString;
         var graph;

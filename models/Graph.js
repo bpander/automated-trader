@@ -4,7 +4,8 @@ var OandaApi = require('../lib/OandaApi');
 var querystring = require('querystring');
 var Util = require('../lib/Util');
 var TimeKeeper = require('../lib/TimeKeeper');
-
+var fs = require('fs');
+var Q = require('Q');
 
 function Graph (instrument, granularity) {
     Eventable.call(this);
@@ -100,10 +101,23 @@ Graph.prototype.fetchHistory = function (options) {
     options = options || {};
     options.instrument = this.instrument.toString();
     options.granularity = this.granularity;
-    return OandaApi.request({
-        path: '/v1/history?' + querystring.stringify(options),
+    var dfd = Q.defer();
+    var history;
+    var queryString = querystring.stringify(options);
+    var filePath = 'history/' + queryString + '.json';
+    if (fs.existsSync(filePath)) {
+        history = fs.readFileSync(filePath);
+        dfd.resolve(JSON.parse(history));
+        return dfd.promise;
+    }
+    OandaApi.request({
+        path: '/v1/history?' + queryString,
         method: 'GET'
+    }).then(function (res) {
+        fs.writeFileSync(filePath, JSON.stringify(res));
+        dfd.resolve(res);
     });
+    return dfd.promise;
 };
 
 
