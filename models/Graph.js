@@ -72,6 +72,7 @@ Graph.prototype.start = function () {
             self.candles.unshift(new Candle().fromJSON(candle));
         });
         self.cronJob.start();
+        return self;
     });
 };
 
