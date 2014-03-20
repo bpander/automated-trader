@@ -9,6 +9,10 @@ function Instrument (base, counter) {
 
     this.counter = counter;
 
+    this.bid;
+
+    this.ask;
+
     this.orders = [];
 
 }
@@ -22,26 +26,22 @@ Instrument.prototype.toString = function () {
 
 
 Instrument.prototype.order = function (broker, options) {
-    options.instrument = this.toString();
-    var self = this;
+    options.instrument = this;
     var order = new Order(broker, options);
     this.orders.push(order);
-    return order.send().then(function () {
-        self.orders.push(order);
-    });
+    order.send();
+    return this;
 };
 
 
 Instrument.prototype.close = function (order) {
-    var self = this;
-    return order.close().then(function () {
-        var index = self.orders.indexOf(order);
-        if (index === -1) {
-            Util.error('Error: Could not find order', order);
-            return;
-        }
-        self.orders.splice(index, 1);
-    });
+    order.close();
+    var index = this.orders.indexOf(order);
+    if (index === -1) {
+        Util.error('Error: Could not find order', order);
+        return;
+    }
+    this.orders.splice(index, 1);
 };
 
 

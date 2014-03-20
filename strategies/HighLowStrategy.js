@@ -5,6 +5,8 @@ var Candle = require('../models/Candle');
 var Q = require('Q');
 var Util = require('../lib/Util');
 var TimeKeeper = require('../lib/TimeKeeper');
+var mysql = require('mysql');
+var SETTINGS = require('../SETTINGS');
 
 
 function HighLowStrategy () {
@@ -28,8 +30,8 @@ HighLowStrategy.prototype.constructor = HighLowStrategy;
 
 
 HighLowStrategy.SIGNAL = {
-    RSI_MIN: 25,
-    RSI_MAX: 75
+    RSI_MIN: 20,
+    RSI_MAX: 80
 };
 
 
@@ -40,34 +42,56 @@ HighLowStrategy.prototype.start = function () {
 
 HighLowStrategy.prototype.backTest = function (start, end) {
     var self = this;
+    var connection = mysql.createConnection(SETTINGS.MYSQL);
     var fetchNewestCandle = function () {
+        var newestCandle = this.futureCandles[0];
+        if (newestCandle === undefined || TimeKeeper.now() !== new Date(newestCandle.time).getTime()) {
+            return;
+        }
         if (this.candles.length > this.maxLength) {
             this.candles.pop();
         }
-        /* TODO: Get future data */
-        // this.candles.unshift(new Candle().fromJSON(this.futureData.candles.shift()));
+        this.candles.unshift(new Candle().fromJSON(this.futureCandles.shift()));
+        this.instrument.bid = this.candles[0].closeBid;
+        this.instrument.ask = this.candles[0].closeAsk;
         this.trigger(Graph.EVENT.CANDLE_CLOSE);
     };
     StrategyBase.prototype.backTest.call(this);
     TimeKeeper.setVirtualTime(start.getTime());
-    return this.createGraphs().then(function () {
-        // Hijack the cronJob callbacks so they get the previously fetched data instead of calling the Oanda api
-        var granularity;
-        var instrumentString;
-        var graph;
-        for (granularity in self.graphs) {
-            if (self.graphs.hasOwnProperty(granularity)) {
-                for (instrumentString in self.graphs[granularity]) {
-                    if (self.graphs[granularity].hasOwnProperty(instrumentString)) {
-                        graph = self.graphs[granularity][instrumentString];
-                        graph.futureData = [];
-                        graph.cronJob._callbacks = [ fetchNewestCandle ];
-                    }
-                }
-            }
-        }
-        TimeKeeper.simulateTime(start, end);
-    });
+    return this.createGraphs()
+        .then(function (graphCollection) {
+            // Hijack the cronJob callbacks so they get the previously fetched data instead of calling the Oanda api
+            return Q.all(graphCollection.map(function (graphs) {
+                return Q.all(graphs.map(function (graph) {
+                    graph.cronJob._callbacks = [ fetchNewestCandle ];
+                    graph.futureCandles = [];
+                    Util.log('Getting', graph.instrument.toString(), graph.granularity, 'future candles');
+                    var getfutureCandles = function () {
+                        var dfd = Q.defer();
+                        var query = 'SELECT * FROM ' + graph.instrument.toString() + '_' + graph.granularity + ' WHERE time >= "' + start.toISOString() + '" AND time <= "' + end.toISOString() + '" ORDER BY time ASC';
+                        connection.query(query, function (error, rows) {
+                            if (error) {
+                                dfd.reject(error);
+                                return;
+                            }
+                            Util.log('Got', graph.instrument.toString(), graph.granularity, 'future candles');
+                            graph.futureCandles = rows;
+                            dfd.resolve();
+                        });
+                        return dfd.promise;
+                    };
+                    return getfutureCandles();
+                }));
+            }));
+        })
+        .then(function () {
+            connection.destroy();
+            Util.log('Simulating time', start, 'to', end);
+            TimeKeeper.simulateTime(start, end);
+            Util.log('Simulating time complete');
+        }, function (error) {
+            Util.error('Error:', error);
+        });
 };
 
 
@@ -131,10 +155,10 @@ HighLowStrategy.prototype.analyzeGraph = function (graph) {
         order = graph.instrument.orders[i];
         if (order.options.side === 'sell') {
             price = candle.closeAsk;
-            doClose = rsi < 25 && price < order.response.price;
+            doClose = rsi < 35 && price < order.response.price;
         } else {
             price = candle.closeBid;
-            doClose = rsi > 75 && price > order.response.price;
+            doClose = rsi > 65 && price > order.response.price;
         }
         if (doClose) {
             graph.instrument.close(order);
