@@ -1,8 +1,8 @@
 var Q = require('Q');
 var Util = require('./lib/Util');
-var OandaApi = require('./lib/OandaApi');
 var mysql = require('mysql');
 var HighLowStrategy = require('./strategies/HighLowStrategy');
+var Graph = require('./models/Graph');
 var SETTINGS = require('./SETTINGS');
 
 var globalStart = new Date('1 Jan 2014 EST');
@@ -25,22 +25,43 @@ highLowStrategy.createGraphs().then(function (graphCollection) {
                 }
                 Util.log('Table', tableName, 'made');
                 Util.log('Fetching history for', tableName);
-                graph.fetchHistory({ count: 5000, start: start.toISOString() }).then(function (response) {
-                    if (response.candles.length === 0) {
-                        dfd.resolve();
-                        return;
-                    }
-                    response.candles.forEach(function (candle) {
-                        var query = 'INSERT INTO ' + tableName + ' VALUES ("' + candle.time + '", ' + [candle.openBid, candle.openAsk, candle.closeBid, candle.closeAsk, candle.highBid, candle.highAsk, candle.lowBid, candle.lowAsk].join(', ') + ')';
-                        connection.query(query, function (error) {
-                            if (error) {
-                                dfd.reject(error);
-                                return;
-                            }
-                            Util.log('Added candle', candle.time, 'to', tableName);
+                var accumulateData = function () {
+                    graph.fetchHistory({ count: 5000, start: start.toISOString() }).then(function (response) {
+                        if (response.candles.length === 0) {
+                            dfd.resolve();
+                            return;
+                        }
+                        var lastCandle;
+                        var insertCandles = function () {
+                            var insertCandlesDfd = Q.defer();
+                            var insertCandle = function () {
+                                var candle = response.candles.shift();
+                                if (candle === undefined) {
+                                    insertCandlesDfd.resolve();
+                                    return;
+                                }
+                                var query = 'INSERT INTO ' + tableName + ' VALUES ("' + candle.time + '", ' + [candle.openBid, candle.openAsk, candle.closeBid, candle.closeAsk, candle.highBid, candle.highAsk, candle.lowBid, candle.lowAsk].join(', ') + ')';
+                                connection.query(query, function (error) {
+                                    if (error) {
+                                        insertCandlesDfd.reject(error);
+                                        return;
+                                    }
+                                    Util.log('Added candle', candle.time, 'to', tableName);
+                                    lastCandle = candle;
+                                    insertCandle();
+                                });
+                            };
+                            insertCandle();
+                            return insertCandlesDfd.promise;
+                        };
+                        insertCandles().then(function () {
+                            start = new Date(new Date(lastCandle.time).getTime() + Graph.INTERVAL[graph.granularity]);
+                            console.log('new start', start);
+                            accumulateData();
                         });
                     });
-                });
+                };
+                accumulateData();
             });
             return dfd.promise;
         }));
