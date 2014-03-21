@@ -30,8 +30,14 @@ HighLowStrategy.prototype.constructor = HighLowStrategy;
 
 
 HighLowStrategy.SIGNAL = {
-    RSI_MIN: 20,
-    RSI_MAX: 80
+    OPEN: {
+        RSI_MIN: 20,
+        RSI_MAX: 80
+    },
+    CLOSE: {
+        RSI_MIN: 25,
+        RSI_MAX: 75
+    }
 };
 
 
@@ -135,7 +141,6 @@ HighLowStrategy.prototype._onShortTermCandleClose = function (e) {
  * Analyze a Graph and use the data to place new orders or close existing
  * 
  * @param  {Graph}  graph  The Graph to analyze
- * @return {Object} Data describing any actions the analysis provoked
  */
 HighLowStrategy.prototype.analyzeGraph = function (graph) {
     var candle = graph.candles[0];
@@ -155,10 +160,10 @@ HighLowStrategy.prototype.analyzeGraph = function (graph) {
         order = graph.instrument.orders[i];
         if (order.options.side === 'sell') {
             price = candle.closeAsk;
-            doClose = rsi < 35 && price < order.response.price;
+            doClose = rsi < HighLowStrategy.SIGNAL.CLOSE.RSI_MIN && price < order.response.price;
         } else {
             price = candle.closeBid;
-            doClose = rsi > 65 && price > order.response.price;
+            doClose = rsi > HighLowStrategy.SIGNAL.CLOSE.RSI_MAX && price > order.response.price;
         }
         if (doClose) {
             graph.instrument.close(order);
@@ -173,11 +178,11 @@ HighLowStrategy.prototype.analyzeGraph = function (graph) {
             return;
         }
     }
-    var doSell = rsi > HighLowStrategy.SIGNAL.RSI_MAX &&
+    var doSell = rsi > HighLowStrategy.SIGNAL.OPEN.RSI_MAX &&
         candle.closeBid > bb_longer.lowerAsk &&
         candle.closeBid > bb_short.upperBid &&
         candle.closeBid > bb_long.meanBid;
-    var doBuy = rsi < HighLowStrategy.SIGNAL.RSI_MIN &&
+    var doBuy = rsi < HighLowStrategy.SIGNAL.OPEN.RSI_MIN &&
         candle.closeAsk < bb_longer.upperBid &&
         candle.closeAsk < bb_short.lowerAsk &&
         candle.closeAsk < bb_long.meanAsk;
