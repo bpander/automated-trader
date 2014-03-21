@@ -2,6 +2,8 @@ function Order (broker, options) {
 
     this.broker = broker;
 
+    this.id = '';
+
     this.options = {};
 
     this.options.instrument = options.instrument;
