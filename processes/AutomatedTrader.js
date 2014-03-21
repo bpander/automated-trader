@@ -2,6 +2,7 @@ var Eventable = require('../lib/Eventable');
 var StrategyBase = require('../strategies/StrategyBase');
 var HighLowStrategy = require('../strategies/HighLowStrategy');
 var Q = require('Q');
+var Util = require('../lib/Util');
 
 
 function AutomatedTrader () {
@@ -17,10 +18,14 @@ AutomatedTrader.prototype.constructor = AutomatedTrader;
 
 
 AutomatedTrader.prototype.start = function () {
-    this.strategies.forEach(function (strategy) {
-        strategy.start();
-    }, this);
-    return this;
+    Util.log('Starting AutomatedTrader');
+    return Q.all(this.strategies.map(function (strategy) {
+        return strategy.start();
+    })).then(function () {
+        Util.log('AutomatedTrader started successfully');
+    }, function (e) {
+        Util.error('AutomatedTrader errored:', e);
+    });
 };
 
 

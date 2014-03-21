@@ -42,7 +42,10 @@ HighLowStrategy.SIGNAL = {
 
 
 HighLowStrategy.prototype.start = function () {
-    return this.createGraphs();
+    var self = this;
+    return StrategyBase.prototype.start.call(this).then(function () {
+        return self.createGraphs();
+    });
 };
 
 

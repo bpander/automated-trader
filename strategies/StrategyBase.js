@@ -1,5 +1,6 @@
 var Eventable = require('../lib/Eventable');
 var Broker = require('../brokers/Broker');
+var OandaBroker = require('../brokers/OandaBroker');
 
 
 function StrategyBase () {
@@ -13,8 +14,8 @@ StrategyBase.prototype.constructor = StrategyBase;
 
 
 StrategyBase.prototype.start = function () {
-    this.broker = new Broker();
-    return this;
+    this.broker = new OandaBroker();
+    return this.broker.start();
 };
 
 
