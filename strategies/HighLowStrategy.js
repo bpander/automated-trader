@@ -14,10 +14,7 @@ function HighLowStrategy () {
 
     this.instruments = [
         new Instrument('EUR', 'USD'),
-        new Instrument('USD', 'JPY'),
-        new Instrument('USD', 'CAD'),
-        new Instrument('GBP', 'USD'),
-        new Instrument('USD', 'CHF')
+        new Instrument('USD', 'JPY')
     ];
 
     this.graphs = {};

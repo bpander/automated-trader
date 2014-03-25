@@ -56,7 +56,6 @@ highLowStrategy.createGraphs().then(function (graphCollection) {
                         };
                         insertCandles().then(function () {
                             start = new Date(new Date(lastCandle.time).getTime() + Graph.INTERVAL[graph.granularity]);
-                            console.log('new start', start);
                             accumulateData();
                         });
                     });
@@ -69,6 +68,6 @@ highLowStrategy.createGraphs().then(function (graphCollection) {
         Util.log('All tables made');
         connection.destroy();
     }, function (error) {
-        console.error(error);
+        Util.error(error);
     });
 });

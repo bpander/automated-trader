@@ -9,13 +9,13 @@ function OandaBroker () {
 
 }
 
-var TODO;
+var TODO = 0;
 
 OandaBroker.prototype.start = function () {
     var self = this;
     Util.log('Fetching OandaBroker\'s balance');
     return OandaApi.request({
-        path: 'v1/accounts/' + SETTINGS.OANDA_ACCOUNT_ID,
+        path: '/v1/accounts/' + SETTINGS.OANDA_ACCOUNT_ID,
         method: 'GET'
     }).then(function (response) {
         self.balance = response.balance;
@@ -27,6 +27,7 @@ OandaBroker.prototype.send = function (order) {
     var self = this;
     var estimatedCost = TODO;
     this.balance = this.balance - estimatedCost;
+    order.options.instrument = order.options.instrument.toString();
     return OandaApi.request({
         path: '/v1/accounts/' + SETTINGS.OANDA_ACCOUNT_ID + '/orders',
         method: 'POST',
