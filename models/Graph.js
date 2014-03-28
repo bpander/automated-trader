@@ -1,10 +1,8 @@
 var Eventable = require('../lib/Eventable');
 var Candle = require('./Candle');
 var OandaApi = require('../lib/OandaApi');
-var querystring = require('querystring');
 var Util = require('../lib/Util');
 var TimeKeeper = require('../lib/TimeKeeper');
-var fs = require('fs');
 var Q = require('Q');
 
 function Graph (instrument, granularity) {
@@ -65,10 +63,10 @@ Graph.EVENT = {
 Graph.prototype.start = function () {
     var self = this;
     Util.log('Getting', this.instrument.toString(), this.granularity, 'graph');
-    return this.fetchHistory({ end: new Date(TimeKeeper.now()).toISOString() }).then(function (res) {
+    return this.fetchHistory({ end: new Date(TimeKeeper.now()).toISOString() }).then(function (response) {
         Util.log('Got', self.instrument.toString(), self.granularity, 'graph history');
         self.candles = [];
-        res.candles.forEach(function (candle) {
+        response.candles.forEach(function (candle) {
             self.candles.unshift(new Candle().fromJSON(candle));
         });
         self.cronJob.start();
@@ -88,11 +86,11 @@ Graph.prototype.fetchNewestCandle = function () {
     this.fetchHistory({
         count: 1,
         end: new Date(TimeKeeper.now()).toISOString()
-    }).then(function (res) {
+    }).then(function (response) {
         if (self.candles.length > self.maxLength) {
             self.candles.pop();
         }
-        self.candles.unshift(new Candle().fromJSON(res.candles[0]));
+        self.candles.unshift(new Candle().fromJSON(response.candles[0]));
         self.trigger(Graph.EVENT.CANDLE_CLOSE);
     });
 };
@@ -103,20 +101,12 @@ Graph.prototype.fetchHistory = function (options) {
     options.instrument = this.instrument.toString();
     options.granularity = this.granularity;
     var dfd = Q.defer();
-    var history;
-    var queryString = querystring.stringify(options);
-    var filePath = 'history/' + queryString + '.json';
-    if (fs.existsSync(filePath)) {
-        history = fs.readFileSync(filePath);
-        dfd.resolve(JSON.parse(history));
-        return dfd.promise;
-    }
     OandaApi.request({
-        path: '/v1/history?' + queryString,
-        method: 'GET'
-    }).then(function (res) {
-        fs.writeFileSync(filePath, JSON.stringify(res));
-        dfd.resolve(res);
+        path: '/v1/history',
+        method: 'GET',
+        qs: options
+    }).then(function (response) {
+        dfd.resolve(response);
     });
     return dfd.promise;
 };

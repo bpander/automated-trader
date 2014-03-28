@@ -31,7 +31,7 @@ OandaBroker.prototype.send = function (order) {
     return OandaApi.request({
         path: '/v1/accounts/' + SETTINGS.OANDA_ACCOUNT_ID + '/orders',
         method: 'POST',
-        data: order.options
+        form: order.options
     }).then(function (response) {
         var orderCost = TODO;
         order.id = response.tradeOpened.id;
