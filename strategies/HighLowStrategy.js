@@ -148,7 +148,6 @@ HighLowStrategy.prototype.analyzeGraph = function (graph) {
     // Get graph analytics
     var rsi = graph.getRSI(14);
     var bb_short = graph.getBollingerBand(14, 1);
-    var bb_long = graph.getBollingerBand(300, 1);
     var bb_longer = this.graphs[Graph.GRANULARITY.D][graph.instrument.toString()].getBollingerBand(300, 1);
 
     // Check for orders that need to be closed
@@ -178,20 +177,26 @@ HighLowStrategy.prototype.analyzeGraph = function (graph) {
             return;
         }
     }
+
     var doSell = rsi > HighLowStrategy.SIGNAL.OPEN.RSI_MAX &&
-        candle.closeBid > bb_longer.lowerAsk &&
-        candle.closeBid > bb_short.upperBid &&
-        candle.closeBid > bb_long.meanBid;
+        candle.closeBid > bb_longer.meanBid &&
+        candle.closeBid > bb_short.upperBid;
     var doBuy = rsi < HighLowStrategy.SIGNAL.OPEN.RSI_MIN &&
-        candle.closeAsk < bb_longer.upperBid &&
-        candle.closeAsk < bb_short.lowerAsk &&
-        candle.closeAsk < bb_long.meanAsk;
+        candle.closeAsk < bb_longer.meanAsk &&
+        candle.closeAsk < bb_short.lowerAsk;
 
     // Sell or buy
     if (doSell || doBuy) {
         price = doSell ? candle.closeBid : candle.closeAsk;
+        units = graph.instrument.base === 'USD' ? units : 1 / price * units;
+        units = Math.floor(units);
+        while (graph.instrument.orders.some(function (order) {
+            return order.options.units === units;
+        })) {
+            units = units - 1;
+        }
         graph.instrument.order(this.broker, {
-            units: graph.instrument.base === 'USD' ? units : 1 / price * units,
+            units: units,
             side: doSell ? 'sell' : 'buy',
             type: 'market'
         });
