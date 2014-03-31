@@ -4,6 +4,10 @@ function Order (broker, options) {
 
     this.id = '';
 
+    this.cost = 0.00;
+
+    this.price = 0.00;
+
     this.options = {};
 
     this.options.instrument = options.instrument;

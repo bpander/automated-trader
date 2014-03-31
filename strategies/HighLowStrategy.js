@@ -13,7 +13,6 @@ function HighLowStrategy () {
     StrategyBase.call(this);
 
     this.instruments = [
-        new Instrument('EUR', 'USD'),
         new Instrument('USD', 'JPY')
     ];
 
@@ -149,6 +148,13 @@ HighLowStrategy.prototype.analyzeGraph = function (graph) {
     var rsi = graph.getRSI(14);
     var bb_short = graph.getBollingerBand(14, 1);
     var bb_longer = this.graphs[Graph.GRANULARITY.D][graph.instrument.toString()].getBollingerBand(300, 1);
+    Util.log('Analyzing graph...');
+    Util.log({
+        'candle.closeBid': candle.closeBid,
+        'rsi': rsi,
+        'bb_short.meanBid': bb_short.meanBid,
+        'bb_longer.meanBid': bb_longer.meanBid
+    });
 
     // Check for orders that need to be closed
     var order;
@@ -159,10 +165,10 @@ HighLowStrategy.prototype.analyzeGraph = function (graph) {
         order = graph.instrument.orders[i];
         if (order.options.side === 'sell') {
             price = candle.closeAsk;
-            doClose = rsi < HighLowStrategy.SIGNAL.CLOSE.RSI_MIN && price < order.response.price;
+            doClose = rsi < HighLowStrategy.SIGNAL.CLOSE.RSI_MIN && price < order.price;
         } else {
             price = candle.closeBid;
-            doClose = rsi > HighLowStrategy.SIGNAL.CLOSE.RSI_MAX && price > order.response.price;
+            doClose = rsi > HighLowStrategy.SIGNAL.CLOSE.RSI_MAX && price > order.price;
         }
         if (doClose) {
             graph.instrument.close(order);

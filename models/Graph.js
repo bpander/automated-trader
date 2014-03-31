@@ -69,6 +69,8 @@ Graph.prototype.start = function () {
         response.candles.forEach(function (candle) {
             self.candles.unshift(new Candle().fromJSON(candle));
         });
+        self.instrument.bid = self.candles[0].closeBid;
+        self.instrument.ask = self.candles[0].closeAsk;
         self.cronJob.start();
         return self;
     });
@@ -91,6 +93,8 @@ Graph.prototype.fetchNewestCandle = function () {
             self.candles.pop();
         }
         self.candles.unshift(new Candle().fromJSON(response.candles[0]));
+        self.instrument.bid = response.candles[0].closeBid;
+        self.instrument.ask = response.candles[0].closeAsk;
         self.trigger(Graph.EVENT.CANDLE_CLOSE);
     });
 };
