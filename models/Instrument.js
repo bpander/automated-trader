@@ -35,13 +35,13 @@ Instrument.prototype.order = function (broker, options) {
 
 
 Instrument.prototype.close = function (order) {
-    order.close();
     var index = this.orders.indexOf(order);
     if (index === -1) {
         Util.error('Error: Could not find order', order);
-        return;
+    } else {
+        this.orders.splice(index, 1);
     }
-    this.orders.splice(index, 1);
+    return order.close();
 };
 
 

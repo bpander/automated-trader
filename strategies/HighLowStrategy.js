@@ -1,11 +1,13 @@
-var StrategyBase = require('./StrategyBase');
-var Instrument = require('../models/Instrument');
-var Graph = require('../models/Graph');
-var Candle = require('../models/Candle');
-var Q = require('Q');
-var Util = require('../lib/Util');
-var TimeKeeper = require('../lib/TimeKeeper');
 var mysql = require('mysql');
+var Q = require('Q');
+var StrategyBase = require('./StrategyBase');
+var Candle = require('../models/Candle');
+var Graph = require('../models/Graph');
+var Instrument = require('../models/Instrument');
+var Order = require('../models/Order');
+var OandaApi = require('../lib/OandaApi');
+var TimeKeeper = require('../lib/TimeKeeper');
+var Util = require('../lib/Util');
 var SETTINGS = require('../SETTINGS');
 
 
@@ -40,8 +42,34 @@ HighLowStrategy.SIGNAL = {
 HighLowStrategy.prototype.start = function () {
     var self = this;
     return StrategyBase.prototype.start.call(this).then(function () {
+        return self.fetchTrades();
+    }).then(function () {
         return self.createGraphs();
     });
+};
+
+
+HighLowStrategy.prototype.fetchTrades = function () {
+    var self = this;
+    return Q.all(this.instruments.map(function (instrument) {
+        return OandaApi.request({
+            path: '/v1/accounts/' + SETTINGS.OANDA_ACCOUNT_ID + '/trades',
+            qs: { instrument: instrument.toString() }
+        }).then(function (response) {
+            instrument.orders = response.trades.map(function (trade) {
+                var order = new Order(self.broker, {
+                    instrument: self.getInstrumentByString(trade.instrument),
+                    units: trade.units,
+                    side: trade.side
+                });
+                order.id = trade.id;
+                order.price = trade.price;
+                order.cost = order.options.instrument.base === 'USD' ? trade.units : trade.price * trade.units;
+                self.broker.balance = self.broker.balance - order.cost;
+                return order;
+            });
+        });
+    }));
 };
 
 
@@ -207,6 +235,18 @@ HighLowStrategy.prototype.analyzeGraph = function (graph) {
             type: 'market'
         });
     }
+};
+
+
+HighLowStrategy.prototype.getInstrumentByString = function (string) {
+    var foundInstrument = null;
+    this.instruments.some(function (instrument) {
+        if (instrument.toString() === string) {
+            foundInstrument = instrument;
+            return true;
+        }
+    });
+    return foundInstrument;
 };
 
 
