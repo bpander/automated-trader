@@ -28,13 +28,14 @@ Broker.prototype.send = function (order) {
         tradesClosed: [],
         tradeReduced: {}
     };
-    order.response = response;
     var delta;
     if (order.options.instrument.base === 'USD') {
         delta = response.tradeOpened.units;
     } else {
         delta = response.price * response.tradeOpened.units;
     }
+    order.price = response.price;
+    order.cost = delta;
     this.balance = this.balance - delta;
     Util.log('-' + delta, this.balance, order.options.side, response.price, response.time);
 };
@@ -52,11 +53,11 @@ Broker.prototype.close = function (order) {
     };
     var delta = 0;
     if (order.options.instrument.base === 'USD') {
-        delta = Math.abs(order.response.price - response.price) * response.units / response.price;
+        delta = Math.abs(order.price - response.price) * response.units / response.price;
         this.balance = this.balance + delta + response.units;
     } else {
-        delta = Math.abs(order.response.price - response.price) * response.units;
-        this.balance = this.balance + delta + response.units * order.response.price;
+        delta = Math.abs(order.price - response.price) * response.units;
+        this.balance = this.balance + delta + response.units * order.price;
     }
     net = net + delta;
     Util.log('+' + delta, net, this.balance, order.options.side, response.price);

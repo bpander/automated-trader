@@ -117,21 +117,32 @@ Graph.prototype.fetchHistory = function (options) {
 
 
 Graph.prototype.getRSI = function (period) {
-    var candles = this.candles.slice(0, period);
-    var gain = 0;
-    var loss = 0;
-    candles.forEach(function (candle) {
-        var delta = candle.closeBid - candle.openBid;
-        if (delta > 0) {
-            gain = gain + delta;
-        } else {
-            loss = loss - delta;
-        }
-    });
-    var averageGain = gain / candles.length;
-    var averageLoss = loss / candles.length;
-    var RS = averageGain / averageLoss;
-    return 100 - 100 / (1 + RS);
+    var previousCandles = this.candles.slice(1, period + 1);
+    var currentCandles = this.candles.slice(0, period);
+    var latestCandle = this.candles[0];
+    var latestDelta = latestCandle.closeBid - latestCandle.openBid;
+    var latestMovement = { gain: 0, loss: 0 };
+    latestDelta > 0 ? (latestMovement.gain = latestDelta) : (latestMovement.loss = latestDelta * -1);
+    var getAverages = function (candles) {
+        var movement = candles.reduce(function (previous, candle) {
+            delta = candle.closeBid - candle.openBid;
+            delta > 0 ? (previous.gain = previous.gain + delta) : (previous.loss = previous.loss - delta);
+            return previous;
+        }, { gain: 0, loss: 0 });
+        return {
+            gain: movement.gain / period,
+            loss: movement.loss / period
+        };
+    };
+    var previousAverages = getAverages(previousCandles);
+    var currentAverages = getAverages(currentCandles);
+    var movingAverages = {
+        gain: (previousAverages.gain * (period - 1) + latestMovement.gain) / period,
+        loss: (previousAverages.loss * (period - 1) + latestMovement.loss) / period
+    };
+    var rs = movingAverages.gain / movingAverages.loss;
+
+    return 100 - 100 / (1 + rs);
 };
 
 
