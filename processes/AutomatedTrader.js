@@ -1,7 +1,7 @@
 var Eventable = require('../lib/Eventable');
 var StrategyBase = require('../strategies/StrategyBase');
 var HighLowStrategy = require('../strategies/HighLowStrategy');
-var Q = require('Q');
+var Q = require('q');
 var Util = require('../lib/Util');
 
 

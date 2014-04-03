@@ -1,4 +1,4 @@
-var Q = require('Q');
+var Q = require('q');
 var Util = require('./lib/Util');
 var mysql = require('mysql');
 var HighLowStrategy = require('./strategies/HighLowStrategy');

@@ -1,4 +1,4 @@
-var Q = require('Q');
+var Q = require('q');
 var Util = require('../lib/Util');
 var TimeKeeper = require('../lib/TimeKeeper');
 

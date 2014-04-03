@@ -1,5 +1,5 @@
 var mysql = require('mysql');
-var Q = require('Q');
+var Q = require('q');
 var StrategyBase = require('./StrategyBase');
 var Candle = require('../models/Candle');
 var Graph = require('../models/Graph');

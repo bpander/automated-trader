@@ -3,7 +3,7 @@ var Candle = require('./Candle');
 var OandaApi = require('../lib/OandaApi');
 var Util = require('../lib/Util');
 var TimeKeeper = require('../lib/TimeKeeper');
-var Q = require('Q');
+var Q = require('q');
 
 function Graph (instrument, granularity) {
     Eventable.call(this);
