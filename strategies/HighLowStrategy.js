@@ -107,7 +107,7 @@ HighLowStrategy.prototype.backTest = function (start, end) {
                                 dfd.reject(error);
                                 return;
                             }
-                            Util.log('Got', graph.instrument.toString(), graph.granularity, 'future candles');
+                            Util.log('Got', rows.length, graph.instrument.toString(), graph.granularity, 'future candles');
                             graph.futureCandles = rows;
                             dfd.resolve();
                         });
@@ -204,7 +204,7 @@ HighLowStrategy.prototype.analyzeGraph = function (graph) {
     }
 
     // Check to see if we should make any more orders
-    var units = Math.max(200, this.broker.balance * 0.1);
+    var units = Math.max(250, this.broker.balance * 0.25);
     if (this.broker.balance < units) {
         units = this.broker.balance;
         if (units < 20) {
