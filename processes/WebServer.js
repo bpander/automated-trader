@@ -28,7 +28,7 @@ WebServer.prototype.routes = {
 
 WebServer.prototype.start = function () {
     var dfd = Q.defer();
-    var port = process.env.TEST_PORT || 9001;
+    var port = process.env.PORT || 9001;
     this.app.set('port', port);
     this.bindRoutes();
     this.server.listen(port, function () {
