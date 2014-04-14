@@ -117,12 +117,6 @@ Graph.prototype.fetchHistory = function (options) {
 
 
 Graph.prototype.getRSI = function (period) {
-    var previousCandles = this.candles.slice(1, period + 1);
-    var currentCandles = this.candles.slice(0, period);
-    var latestCandle = this.candles[0];
-    var latestDelta = latestCandle.closeBid - latestCandle.openBid;
-    var latestMovement = { gain: 0, loss: 0 };
-    latestDelta > 0 ? (latestMovement.gain = latestDelta) : (latestMovement.loss = latestDelta * -1);
     var getAverages = function (candles) {
         var movement = candles.reduce(function (previous, candle) {
             delta = candle.closeBid - candle.openBid;
@@ -134,12 +128,18 @@ Graph.prototype.getRSI = function (period) {
             loss: movement.loss / period
         };
     };
-    var previousAverages = getAverages(previousCandles);
-    var currentAverages = getAverages(currentCandles);
-    var movingAverages = {
-        gain: (previousAverages.gain * (period - 1) + latestMovement.gain) / period,
-        loss: (previousAverages.loss * (period - 1) + latestMovement.loss) / period
-    };
+    var sample = this.candles.slice(period, period * 2);
+    var movingAverages = getAverages(sample);
+    var averages = {};
+    var i = 1;
+    var l = period + 1;
+    for (; i !== l; i++) {
+        sample = this.candles.slice(period - i, period * 2 - i);
+        averages = getAverages(sample);
+        movingAverages.gain = (movingAverages.gain * (period - 1) + averages.gain) / period;
+        movingAverages.loss = (movingAverages.loss * (period - 1) + averages.loss) / period;
+    }
+
     var rs = movingAverages.gain / movingAverages.loss;
 
     return 100 - 100 / (1 + rs);
