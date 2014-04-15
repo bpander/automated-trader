@@ -107,7 +107,7 @@ HighLowStrategy.prototype.backTest = function (start, end) {
                                 dfd.reject(error);
                                 return;
                             }
-                            Util.log('Got', graph.instrument.toString(), graph.granularity, 'future candles');
+                            Util.log('Got', rows.length, graph.instrument.toString(), graph.granularity, 'future candles');
                             graph.futureCandles = rows;
                             dfd.resolve();
                         });
@@ -176,13 +176,15 @@ HighLowStrategy.prototype.analyzeGraph = function (graph) {
     var rsi = graph.getRSI(14);
     var bb_short = graph.getBollingerBand(14, 1);
     var bb_longer = this.graphs[Graph.GRANULARITY.D][graph.instrument.toString()].getBollingerBand(300, 1);
-    Util.log('Analyzing graph...');
-    Util.log({
-        'candle.closeBid': candle.closeBid,
-        'rsi': rsi,
-        'bb_short.meanBid': bb_short.meanBid,
-        'bb_longer.meanBid': bb_longer.meanBid
-    });
+    if (!this.isBacktesting) {
+        Util.log('Analyzing graph...');
+        Util.log({
+            'candle.closeBid': candle.closeBid,
+            'rsi': rsi,
+            'bb_short.meanBid': bb_short.meanBid,
+            'bb_longer.meanBid': bb_longer.meanBid
+        });
+    }
 
     // Check for orders that need to be closed
     var order;
@@ -204,7 +206,7 @@ HighLowStrategy.prototype.analyzeGraph = function (graph) {
     }
 
     // Check to see if we should make any more orders
-    var units = Math.max(200, this.broker.balance * 0.1);
+    var units = Math.max(250, this.broker.balance * 0.25);
     if (this.broker.balance < units) {
         units = this.broker.balance;
         if (units < 20) {
