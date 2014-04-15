@@ -66,6 +66,10 @@ Graph.prototype.start = function () {
     return this.fetchHistory({ end: new Date(TimeKeeper.now()).toISOString() }).then(function (response) {
         Util.log('Got', self.instrument.toString(), self.granularity, 'graph history');
         self.candles = [];
+        if (!response.candles.slice(-1)[0].complete) {
+            Util.log('Removing last candle: incomplete candle');
+            response.candles.pop();
+        }
         response.candles.forEach(function (candle) {
             self.candles.unshift(new Candle().fromJSON(candle));
         });
