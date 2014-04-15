@@ -1,3 +1,6 @@
+// New Relic pings the site continually to prevent Heroku from idling and falling asleep
+require('newrelic');
+
 var WebServer = require('./processes/WebServer');
 var AutomatedTrader = require('./processes/AutomatedTrader');
 var Observer = require('./lib/Observer');
