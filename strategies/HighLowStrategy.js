@@ -176,13 +176,15 @@ HighLowStrategy.prototype.analyzeGraph = function (graph) {
     var rsi = graph.getRSI(14);
     var bb_short = graph.getBollingerBand(14, 1);
     var bb_longer = this.graphs[Graph.GRANULARITY.D][graph.instrument.toString()].getBollingerBand(300, 1);
-    Util.log('Analyzing graph...');
-    Util.log({
-        'candle.closeBid': candle.closeBid,
-        'rsi': rsi,
-        'bb_short.meanBid': bb_short.meanBid,
-        'bb_longer.meanBid': bb_longer.meanBid
-    });
+    if (!this.isBacktesting) {
+        Util.log('Analyzing graph...');
+        Util.log({
+            'candle.closeBid': candle.closeBid,
+            'rsi': rsi,
+            'bb_short.meanBid': bb_short.meanBid,
+            'bb_longer.meanBid': bb_longer.meanBid
+        });
+    }
 
     // Check for orders that need to be closed
     var order;

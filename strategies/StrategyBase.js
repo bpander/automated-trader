@@ -8,6 +8,8 @@ function StrategyBase () {
 
     this.broker = null;
 
+    this.isBacktesting = false;
+
 }
 StrategyBase.prototype = new Eventable();
 StrategyBase.prototype.constructor = StrategyBase;
@@ -20,6 +22,7 @@ StrategyBase.prototype.start = function () {
 
 
 StrategyBase.prototype.backTest = function (start, end) {
+    this.isBacktesting = true;
     this.broker = new Broker();
     return this;
 };
