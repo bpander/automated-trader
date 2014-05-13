@@ -110,7 +110,7 @@ Graph.prototype.fetchHistory = function (options) {
     options.granularity = this.granularity;
     var dfd = Q.defer();
     OandaApi.request({
-        path: '/v1/history',
+        path: '/v1/candles',
         method: 'GET',
         qs: options
     }).then(function (response) {
