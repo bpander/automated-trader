@@ -1,0 +1,10 @@
+{
+  "name": "node-trader",
+  "description": "",
+  "version": "0.0.1",
+  "dependencies": {
+    "request": "~2.34.0",
+    "q": "~1.0.1",
+    "node.extend": "~1.0.10"
+  }
+}
