@@ -53,4 +53,34 @@ Oanda.request = function (options) {
 };
 
 
+Oanda.getCandles = function (instrument, granularity, start, end) {
+    var dfd = Q.defer();
+    var candles = [];
+    var fetch = function () {
+        Oanda.request({
+            qs: {
+                instrument: instrument,
+                granularity: granularity,
+                start: start.toISOString(),
+                count: 4999,
+                includeFirst: false,
+                candleFormat: 'midpoint'
+            }
+        }).then(function (response) {
+            candles = candles.concat(response.candles);
+            start = new Date(candles[candles.length - 1].time);
+            if (start > end) {
+                dfd.resolve(candles);
+            } else {
+                fetch();
+            }
+        }, function (error) {
+            dfd.reject(error);
+        });
+    };
+    fetch();
+    return dfd.promise;
+};
+
+
 module.exports = Oanda;

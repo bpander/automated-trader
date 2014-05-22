@@ -57,22 +57,14 @@ var SMA = function (candles, period) {
 };
 
 
-Oanda.request({
-    qs: {
-        instrument: 'EUR_USD',
-        granularity: 'S30',
-        count: 5000,
-        candleFormat: 'midpoint',
-        start: new Date('5 Apr 2013').toISOString()
-    }
-}).then(function (response) {
+Oanda.getCandles('EUR_USD', 'M5', new Date('01 Jan 2013'), new Date('21 May 2014')).then(function (candles) {
     var pips = 0;
-    var macdSeries = MACD(response.candles, 12, 26, 9);
+    var macdSeries = MACD(candles, 12, 26, 9);
     var linesPrevious = macdSeries[0];
     var orders = [];
     var balance = 1000;
     var units = 250;
-    SMA(response.candles, 200);
+    SMA(candles, 200);
     macdSeries.forEach(function (lines) {
         if (lines.candle.sma === undefined) {
             return;
@@ -138,7 +130,7 @@ Oanda.request({
         }
     });
     var numOrdersClosed = orders.length - ordersOpen.length;
-    console.log('candle range:', response.candles[0].time, '-', response.candles[response.candles.length - 1].time);
+    console.log('candle range:', candles[0].time, '-', candles[candles.length - 1].time);
     console.log('open:', ordersOpen);
     console.log('balance:', balance);
     console.log('heldUpFunds:', heldUpFunds);
