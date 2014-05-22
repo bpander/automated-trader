@@ -23,18 +23,28 @@ Oanda.request = function (options) {
     console.log('Making Oanda API request...');
     options = extend(true, {}, _defaults, options);
     var dfd = Q.defer();
-    var path = 'cache/' + querystring.stringify(options.qs);
+    var dir = 'history';
+    var path = dir + '/' + querystring.stringify(options.qs);
     if (fs.existsSync(path)) {
         console.log('Found Oanda response in cache');
         dfd.resolve(JSON.parse(fs.readFileSync(path)));
     } else {
         request(options, function (error, response, body) {
             console.log('Got Oanda API response');
+            var json;
             if (error) {
                 dfd.reject(error);
             } else {
+                json = JSON.parse(body);
+                if (json.code !== undefined) {
+                    dfd.reject(json);
+                    return;
+                }
+                if (!fs.existsSync(dir)) {
+                    fs.mkdirSync(dir);
+                }
                 fs.writeFile(path, body, function () {});
-                dfd.resolve(JSON.parse(body));
+                dfd.resolve(json);
             }
         });
     }

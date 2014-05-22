@@ -3,15 +3,10 @@
 var Oanda = require('./Oanda');
 
 
-var COUNT = 5000;
-var SAMPLE_SIZE = 10;
-var OUTCOME_SIZE = 5;
-var THRESHOLD = 0.05;
-
 var EMA = function (numbers) {
     numbers = numbers.slice(0);
     var ema = numbers.shift();
-    var weight = 0.75;
+    var weight = 0.25;
     numbers.forEach(function (number) {
         ema = weight * number + (1 - weight) * ema;
     });
@@ -19,111 +14,137 @@ var EMA = function (numbers) {
 };
 
 
-function Pattern (movements) {
-
-    this.movements = movements;
-
-    this.pipMovement = 0;
-
-    this.repeats = 0;
-
-    this.averageMovement = 0;
-
-}
-
-
-Pattern.prototype.percentDiff = function (pattern) {
-    return EMA(this.movements.map(function (movement, i) {
-        var base = Math.abs(movement);
-        var counter = Math.abs(pattern.movements[i]);
-        var max = base;
-        var min = counter;
-        if (counter > base) {
-            max = counter;
-            min = base;
-        }
-        return max === 0 ? 0 : (max - min) / max;
-    }));
+var extractClose = function (candle) {
+    return candle.closeMid;
 };
 
+var MACD = function (candles, fast, slow, signal) {
+    var macdSeries = [];
+    var i = slow;
+    candles.slice(slow).forEach(function (candle) {
+        var emaFast = EMA(candles.slice(i - fast, i).map(extractClose));
+        var emaSlow = EMA(candles.slice(i - slow, i).map(extractClose));
+        var lines = {
+            time: candle.time,
+            macd: emaFast - emaSlow,
+            signal: undefined,
+            candle: candle
+        };
+        macdSeries.push(lines);
+        i++;
+    });
+
+    i = signal;
+    macdSeries.slice(signal).forEach(function (lines) {
+        lines.signal = EMA(macdSeries.slice(i - signal, i).map(function (lines) {
+            return lines.macd;
+        }));
+        i++;
+    });
+    return macdSeries;
+};
+
+var SMA = function (candles, period) {
+    var sample;
+    var i = period;
+    var l = candles.length;
+    for (; i !== l; i++) {
+        sample = candles.slice(i - period, i);
+        candles[i].sma = sample.reduce(function (previous, current) {
+            return previous + current.closeMid;
+        }, 0) / sample.length;
+    }
+};
 
 
 Oanda.request({
     qs: {
-        instrument: 'GBP_USD',
-        granularity: 'M1',
-        count: COUNT,
-        candleFormat: 'midpoint'
+        instrument: 'EUR_USD',
+        granularity: 'S30',
+        count: 5000,
+        candleFormat: 'midpoint',
+        start: new Date('5 Apr 2013').toISOString()
     }
 }).then(function (response) {
+    var pips = 0;
+    var macdSeries = MACD(response.candles, 12, 26, 9);
+    var linesPrevious = macdSeries[0];
+    var orders = [];
+    var balance = 1000;
+    var units = 250;
+    SMA(response.candles, 200);
+    macdSeries.forEach(function (lines) {
+        if (lines.candle.sma === undefined) {
+            return;
+        }
 
-    var patterns = [];
-    var numPatternsPassed = 0;
-    var candlesSubset;
-    var candlesSubsetInitial;
-    var pattern;
-    var candlesCounter;
-    var candlesCounterInitial;
-    var patternCounter;
-    var percentDiff;
-    var candlesLearn = response.candles.splice(0, COUNT / 2);
-    var candlesTest = response.candles;
-    var i = 0;
-    var j = 0;
-    var l = candlesLearn.length - SAMPLE_SIZE - OUTCOME_SIZE;
-    for (; i !== l; i++) {
-        candlesSubset = candlesLearn.slice(i, i + SAMPLE_SIZE);
-        candlesSubsetInitial = candlesSubset[0].closeMid;
-        pattern = new Pattern(candlesSubset.map(function (candle) {
-            return candle.closeMid - candlesSubsetInitial;
-        }));
-        pattern.pipMovement = candlesLearn[i + SAMPLE_SIZE + OUTCOME_SIZE].closeMid - candlesLearn[j + SAMPLE_SIZE].closeMid;
-        for (j = 0; j !== l; j++) {
-            candlesCounter = candlesLearn.slice(j, j + SAMPLE_SIZE);
-            candlesCounterInitial = candlesCounter[0].closeMid;
-            patternCounter = new Pattern(candlesCounter.map(function (candle) {
-                return candle.closeMid - candlesCounterInitial;
-            }));
-            percentDiff = pattern.percentDiff(patternCounter);
-            if (percentDiff < THRESHOLD && percentDiff !== 0) {
-                if (patterns.indexOf(pattern) === -1) {
-                    patterns.push(pattern);
+        var isNeutral = lines.macd === 0;
+        if (isNeutral) {
+            return;
+            linesPrevious = lines;
+        }
+
+        var isBelowCenter = lines.macd < 0;
+        if (isBelowCenter) {
+            var wasBear = linesPrevious.macd < linesPrevious.signal;
+            var isBull = lines.macd > lines.signal;
+            if (wasBear && isBull) {
+                orders.forEach(function (order) {
+                    if (order.side === 'sell' && order.close === undefined && order.open > lines.candle.closeMid) {
+                        order.close = lines.candle.closeMid;
+                        var delta = (order.open - order.close) * units;
+                        pips = pips + delta;
+                        balance = balance + delta + order.open * units;
+                    }
+                });
+                var cost = lines.candle.closeMid * units;
+                if (balance >= cost && lines.candle.sma > lines.candle.closeMid) {
+                    var order = { side: 'buy', open: lines.candle.closeMid, close: undefined };
+                    orders.push(order);
+                    balance = balance - cost;
                 }
-                pattern.repeats++;
-                pattern.pipMovement = pattern.pipMovement + (candlesLearn[j + SAMPLE_SIZE + OUTCOME_SIZE].closeMid - candlesLearn[j + SAMPLE_SIZE].closeMid);
-                pattern.averageMovement = pattern.pipMovement / pattern.repeats;
+            }
+
+        } else {
+            var wasBull = linesPrevious.macd > linesPrevious.signal;
+            var isBear = lines.macd < lines.signal;
+            if (wasBull && isBear) {
+                orders.forEach(function (order) {
+                    if (order.side === 'buy' && order.close === undefined && order.open < lines.candle.closeMid) {
+                        order.close = lines.candle.closeMid;
+                        var delta = (order.close - order.open) * units;
+                        pips = pips + delta;
+                        balance = balance + delta + order.open * units;
+                    }
+                });
+                var cost = lines.candle.closeMid * units;
+                if (balance >= cost && lines.candle.sma > lines.candle.closeMid) {
+                    var order = { side: 'sell', open: lines.candle.closeMid, close: undefined };
+                    orders.push(order);
+                    balance = balance - cost;
+                }
             }
         }
-    }
+        linesPrevious = lines;
+    });
 
-    var patternWinner = patterns.sort(function (a, b) {
-        return Math.abs(b.pipMovement) - Math.abs(a.pipMovement);
-    })[0];
-    console.log('Found winner:', patternWinner);
-    var trades = 0;
-    var profit = 0;
-    var delta;
 
-    i = 0;
-    l = candlesTest.length - SAMPLE_SIZE - OUTCOME_SIZE;
-    for (; i !== l; i++) {
-        candlesSubset = candlesTest.slice(i, i + SAMPLE_SIZE);
-        candlesSubsetInitial = candlesSubset[0].closeMid;
-        pattern = new Pattern(candlesSubset.map(function (candle) {
-            return candle.closeMid - candlesSubsetInitial;
-        }));
-        percentDiff = patternWinner.percentDiff(pattern);
-        if (percentDiff < THRESHOLD) {
-            trades++;
-            delta = candlesTest[i + SAMPLE_SIZE + OUTCOME_SIZE].closeMid - candlesTest[i + SAMPLE_SIZE].closeMid;
-            if (patternWinner.pipMovement < 0) {
-                delta = delta * -1;
-            }
-            profit = profit + delta;
+    var ordersOpen = [];
+    var heldUpFunds = 0;
+    orders.forEach(function (order) {
+        if (order.close === undefined) {
+            ordersOpen.push(order);
+            heldUpFunds = heldUpFunds + order.open * units;
         }
-    }
-    console.log('Test finished');
-    console.log('Profit:', profit * 10000);
-    console.log('Trades:', trades);
-    console.log('AveragePL', profit * 10000 / trades);
+    });
+    var numOrdersClosed = orders.length - ordersOpen.length;
+    console.log('candle range:', response.candles[0].time, '-', response.candles[response.candles.length - 1].time);
+    console.log('open:', ordersOpen);
+    console.log('balance:', balance);
+    console.log('heldUpFunds:', heldUpFunds);
+    console.log('net:', balance + heldUpFunds);
+    console.log('orders closed:', numOrdersClosed);
+    console.log('P/L:', pips);
+}, function (error) {
+    console.error('ERROR', error);
 });
